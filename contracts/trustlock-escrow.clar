@@ -131,3 +131,37 @@
     )
   )
 )
+
+;; ========================================
+;; PUBLIC FUNCTIONS - RELEASE
+;; ========================================
+
+;; Release funds to seller
+;; Can only be called by seller after funding
+;; @param escrow-id: ID of the escrow to release
+;; @returns (ok true) on success, error code on failure
+(define-public (release (escrow-id uint))
+  (let (
+    ;; Retrieve escrow data
+    (escrow-data (unwrap! (get-escrow escrow-id) (err u201))) ;; ERR-NOT-FUNDED
+    (seller (get seller escrow-data))
+    (amount (get amount escrow-data))
+    (status (get status escrow-data))
+  )
+    ;; CHECKS: Verify preconditions
+    (asserts! (is-eq tx-sender seller) (err u101)) ;; ERR-NOT-SELLER
+    (asserts! (is-eq status STATUS-FUNDED) (err u201)) ;; ERR-NOT-FUNDED
+    
+    ;; EFFECTS: Update state before external call
+    (map-set escrows
+      { escrow-id: escrow-id }
+      (merge escrow-data { status: STATUS-RELEASED })
+    )
+    
+    ;; INTERACTIONS: Transfer funds from contract to seller
+    (match (as-contract (stx-transfer? amount tx-sender seller))
+      success (ok true)
+      error (err u400) ;; ERR-TRANSFER-FAILED
+    )
+  )
+)
