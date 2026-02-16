@@ -51,3 +51,44 @@
 (define-read-only (get-escrow (escrow-id uint))
   (map-get? escrows { escrow-id: escrow-id })
 )
+
+;; ========================================
+;; PUBLIC FUNCTIONS - INITIALIZATION
+;; ========================================
+
+;; Initialize a new escrow
+;; @param buyer: Principal address of the buyer
+;; @param seller: Principal address of the seller
+;; @param amount: Amount of STX to escrow (in micro-STX)
+;; @param deadline: Block height after which refund is allowed
+;; @returns escrow-id on success, error code on failure
+(define-public (initialize-escrow 
+  (buyer principal)
+  (seller principal)
+  (amount uint)
+  (deadline-blocks uint))
+  (let (
+    (escrow-id (get-next-escrow-id))
+    (deadline (+ block-height deadline-blocks))
+  )
+    ;; Validate inputs
+    (asserts! (> amount u0) (err u300)) ;; ERR-INVALID-AMOUNT
+    (asserts! (> deadline-blocks u0) (err u301)) ;; ERR-DEADLINE-PASSED
+    (asserts! (not (is-eq buyer seller)) (err u103)) ;; ERR-UNAUTHORIZED (same address)
+    
+    ;; Create escrow entry
+    (map-set escrows
+      { escrow-id: escrow-id }
+      {
+        buyer: buyer,
+        seller: seller,
+        amount: amount,
+        deadline: deadline,
+        status: STATUS-CREATED,
+        funded-at: none
+      }
+    )
+    
+    (ok escrow-id)
+  )
+)
