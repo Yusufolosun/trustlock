@@ -5,8 +5,7 @@
 ;; IMPORTS
 ;; ========================================
 
-;; Import escrow trait
-(use-trait escrow-trait .trustlock-traits.escrow-trait)
+
 
 ;; ========================================
 ;; DATA STRUCTURES
@@ -164,35 +163,14 @@
   (ok (map get-escrow-info escrow-ids))
 )
 
-;; Get recent escrows (last N created)
-;; Returns up to 20 most recent escrow IDs
-(define-read-only (get-recent-escrows (count uint))
+;; Get pagination info for recent escrows
+;; Returns the start index and total for client-side querying
+(define-read-only (get-recent-escrows-page (count uint))
   (let (
     (total (var-get escrow-count))
     (start (if (> total count) (- total count) u0))
-    (ids (generate-id-range start total))
   )
-    (ok ids)
-  )
-)
-
-;; Helper: Generate range of escrow IDs
-(define-private (generate-id-range (start uint) (end uint))
-  (if (>= start end)
-    (list)
-    (generate-id-list start end (list))
-  )
-)
-
-;; Helper: Build list of IDs (tail-recursive)
-(define-private (generate-id-list (current uint) (end uint) (acc (list 20 uint)))
-  (if (or (>= current end) (>= (len acc) u20))
-    acc
-    (generate-id-list 
-      (+ current u1) 
-      end 
-      (unwrap-panic (as-max-len? (append acc current) u20))
-    )
+    (ok { start: start, total: total })
   )
 )
 
@@ -212,10 +190,10 @@
 (define-read-only (get-creator-stats (creator principal))
   (let (
     (creator-data (get-creator-escrows creator))
-    (escrow-count (len (get escrow-ids creator-data)))
+    (creator-count (len (get escrow-ids creator-data)))
   )
     (ok {
-      total-created: escrow-count,
+      total-created: creator-count,
       escrow-ids: (get escrow-ids creator-data)
     })
   )

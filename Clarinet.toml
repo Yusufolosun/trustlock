@@ -3,17 +3,31 @@ name = "trustlock"
 description = "Modular escrow factory for trustless P2P transactions"
 authors = []
 telemetry = false
-cache_dir = ".cache"
+cache_dir = "./.cache"
 requirements = []
-
-[contracts.trustlock-factory]
-path = "contracts/trustlock-factory.clar"
-clarity_version = 2
-
-[contracts.trustlock-escrow]
-path = "contracts/trustlock-escrow.clar"
-clarity_version = 2
 
 [contracts.trustlock-traits]
 path = "contracts/trustlock-traits.clar"
 clarity_version = 2
+epoch = "2.4"
+
+[contracts.trustlock-escrow]
+path = "contracts/trustlock-escrow.clar"
+clarity_version = 2
+epoch = "2.4"
+depends_on = ["trustlock-traits"]
+
+[contracts.trustlock-factory]
+path = "contracts/trustlock-factory.clar"
+clarity_version = 2
+epoch = "2.4"
+depends_on = ["trustlock-traits", "trustlock-escrow"]
+
+[repl.analysis]
+passes = ["check_checker"]
+
+[repl.analysis.check_checker]
+strict = false
+trusted_sender = false
+trusted_caller = false
+callee_filter = false
