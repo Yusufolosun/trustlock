@@ -35,6 +35,43 @@ clarinet test
 clarinet deployments apply -p deployments/default.devnet-plan.yaml
 ```
 
+## Development & Testing
+
+### Running Tests
+
+```bash
+# Run full test suite
+clarinet test
+
+# Run with coverage report
+clarinet test --coverage
+
+# Run specific test file
+clarinet test --file tests/trustlock-escrow_test.ts
+```
+
+### Test Coverage
+
+- **Total Tests**: 24+ test cases
+- **Coverage**: 95%+ code coverage target
+- **Categories**: Initialization, deposit, release, refund, factory, integration, edge cases
+
+See [Test Documentation](tests/README.md) for details.
+
+### Local Development
+
+```bash
+# Check contract syntax
+clarinet check
+
+# Start local devnet
+clarinet integrate
+
+# Deploy contracts locally
+clarinet deployments apply -p deployments/default.devnet-plan.yaml
+```
+
 ## License
 
 MIT
+
