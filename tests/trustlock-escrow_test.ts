@@ -212,3 +212,127 @@ Clarinet.test({
     },
 });
 
+// ========================================
+// RELEASE TESTS
+// ========================================
+
+Clarinet.test({
+    name: "Escrow: Successful release by seller",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get('deployer')!;
+        const buyer = accounts.get('wallet_1')!;
+        const seller = accounts.get('wallet_2')!;
+        const amount = 1000000;
+
+        let block = chain.mineBlock([
+            Tx.contractCall(
+                'trustlock-escrow',
+                'initialize-escrow',
+                [
+                    types.principal(buyer.address),
+                    types.principal(seller.address),
+                    types.uint(amount),
+                    types.uint(100)
+                ],
+                deployer.address
+            ),
+            Tx.contractCall(
+                'trustlock-escrow',
+                'deposit',
+                [types.uint(0)],
+                buyer.address
+            ),
+            // Seller releases funds
+            Tx.contractCall(
+                'trustlock-escrow',
+                'release',
+                [types.uint(0)],
+                seller.address
+            )
+        ]);
+
+        block.receipts[2].result.expectOk().expectBool(true);
+
+        // Verify status is RELEASED
+        let escrowInfo = chain.callReadOnlyFn(
+            'trustlock-escrow',
+            'get-status',
+            [types.uint(0)],
+            deployer.address
+        );
+
+        assertEquals(escrowInfo.result.expectOk(), '"RELEASED"');
+    },
+});
+
+Clarinet.test({
+    name: "Escrow: Reject release from non-seller",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get('deployer')!;
+        const buyer = accounts.get('wallet_1')!;
+        const seller = accounts.get('wallet_2')!;
+
+        let block = chain.mineBlock([
+            Tx.contractCall(
+                'trustlock-escrow',
+                'initialize-escrow',
+                [
+                    types.principal(buyer.address),
+                    types.principal(seller.address),
+                    types.uint(1000000),
+                    types.uint(100)
+                ],
+                deployer.address
+            ),
+            Tx.contractCall(
+                'trustlock-escrow',
+                'deposit',
+                [types.uint(0)],
+                buyer.address
+            ),
+            // Buyer tries to release (should fail)
+            Tx.contractCall(
+                'trustlock-escrow',
+                'release',
+                [types.uint(0)],
+                buyer.address
+            )
+        ]);
+
+        block.receipts[2].result.expectErr().expectUint(101); // ERR-NOT-SELLER
+    },
+});
+
+Clarinet.test({
+    name: "Escrow: Reject release before funding",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get('deployer')!;
+        const buyer = accounts.get('wallet_1')!;
+        const seller = accounts.get('wallet_2')!;
+
+        let block = chain.mineBlock([
+            Tx.contractCall(
+                'trustlock-escrow',
+                'initialize-escrow',
+                [
+                    types.principal(buyer.address),
+                    types.principal(seller.address),
+                    types.uint(1000000),
+                    types.uint(100)
+                ],
+                deployer.address
+            ),
+            // Try to release before deposit
+            Tx.contractCall(
+                'trustlock-escrow',
+                'release',
+                [types.uint(0)],
+                seller.address
+            )
+        ]);
+
+        block.receipts[1].result.expectErr().expectUint(201); // ERR-NOT-FUNDED
+    },
+});
+
+
