@@ -153,3 +153,45 @@
     (err u201) ;; ERR-NOT-FUNDED (doesn't exist)
   )
 )
+
+;; ========================================
+;; READ-ONLY FUNCTIONS - BATCH QUERIES
+;; ========================================
+
+;; Get multiple escrow details at once
+;; Useful for pagination in frontend
+(define-read-only (get-escrows-batch (escrow-ids (list 20 uint)))
+  (ok (map get-escrow-info escrow-ids))
+)
+
+;; Get recent escrows (last N created)
+;; Returns up to 20 most recent escrow IDs
+(define-read-only (get-recent-escrows (count uint))
+  (let (
+    (total (var-get escrow-count))
+    (start (if (> total count) (- total count) u0))
+    (ids (generate-id-range start total))
+  )
+    (ok ids)
+  )
+)
+
+;; Helper: Generate range of escrow IDs
+(define-private (generate-id-range (start uint) (end uint))
+  (if (>= start end)
+    (list)
+    (generate-id-list start end (list))
+  )
+)
+
+;; Helper: Build list of IDs (tail-recursive)
+(define-private (generate-id-list (current uint) (end uint) (acc (list 20 uint)))
+  (if (or (>= current end) (>= (len acc) u20))
+    acc
+    (generate-id-list 
+      (+ current u1) 
+      end 
+      (unwrap-panic (as-max-len? (append acc current) u20))
+    )
+  )
+)
