@@ -335,4 +335,148 @@ Clarinet.test({
     },
 });
 
+// ========================================
+// REFUND TESTS
+// ========================================
+
+Clarinet.test({
+    name: "Escrow: Successful refund after deadline",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get('deployer')!;
+        const buyer = accounts.get('wallet_1')!;
+        const seller = accounts.get('wallet_2')!;
+        const deadlineBlocks = 10;
+
+        let block = chain.mineBlock([
+            Tx.contractCall(
+                'trustlock-escrow',
+                'initialize-escrow',
+                [
+                    types.principal(buyer.address),
+                    types.principal(seller.address),
+                    types.uint(1000000),
+                    types.uint(deadlineBlocks)
+                ],
+                deployer.address
+            ),
+            Tx.contractCall(
+                'trustlock-escrow',
+                'deposit',
+                [types.uint(0)],
+                buyer.address
+            )
+        ]);
+
+        // Mine blocks to pass deadline
+        chain.mineEmptyBlockUntil(chain.blockHeight + deadlineBlocks + 1);
+
+        // Now refund should succeed
+        let refundBlock = chain.mineBlock([
+            Tx.contractCall(
+                'trustlock-escrow',
+                'refund',
+                [types.uint(0)],
+                buyer.address
+            )
+        ]);
+
+        refundBlock.receipts[0].result.expectOk().expectBool(true);
+
+        // Verify status is REFUNDED
+        let escrowInfo = chain.callReadOnlyFn(
+            'trustlock-escrow',
+            'get-status',
+            [types.uint(0)],
+            deployer.address
+        );
+
+        assertEquals(escrowInfo.result.expectOk(), '"REFUNDED"');
+    },
+});
+
+Clarinet.test({
+    name: "Escrow: Reject refund before deadline",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get('deployer')!;
+        const buyer = accounts.get('wallet_1')!;
+        const seller = accounts.get('wallet_2')!;
+
+        let block = chain.mineBlock([
+            Tx.contractCall(
+                'trustlock-escrow',
+                'initialize-escrow',
+                [
+                    types.principal(buyer.address),
+                    types.principal(seller.address),
+                    types.uint(1000000),
+                    types.uint(100)
+                ],
+                deployer.address
+            ),
+            Tx.contractCall(
+                'trustlock-escrow',
+                'deposit',
+                [types.uint(0)],
+                buyer.address
+            ),
+            // Try to refund immediately
+            Tx.contractCall(
+                'trustlock-escrow',
+                'refund',
+                [types.uint(0)],
+                buyer.address
+            )
+        ]);
+
+        block.receipts[2].result.expectErr().expectUint(302); // ERR-DEADLINE-NOT-REACHED
+    },
+});
+
+Clarinet.test({
+    name: "Escrow: Permissionless refund works",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get('deployer')!;
+        const buyer = accounts.get('wallet_1')!;
+        const seller = accounts.get('wallet_2')!;
+        const thirdParty = accounts.get('wallet_3')!;
+        const deadlineBlocks = 10;
+
+        let block = chain.mineBlock([
+            Tx.contractCall(
+                'trustlock-escrow',
+                'initialize-escrow',
+                [
+                    types.principal(buyer.address),
+                    types.principal(seller.address),
+                    types.uint(1000000),
+                    types.uint(deadlineBlocks)
+                ],
+                deployer.address
+            ),
+            Tx.contractCall(
+                'trustlock-escrow',
+                'deposit',
+                [types.uint(0)],
+                buyer.address
+            )
+        ]);
+
+        // Mine blocks to pass deadline
+        chain.mineEmptyBlockUntil(chain.blockHeight + deadlineBlocks + 1);
+
+        // Third party triggers refund
+        let refundBlock = chain.mineBlock([
+            Tx.contractCall(
+                'trustlock-escrow',
+                'refund',
+                [types.uint(0)],
+                thirdParty.address
+            )
+        ]);
+
+        refundBlock.receipts[0].result.expectOk().expectBool(true);
+    },
+});
+
+
 
