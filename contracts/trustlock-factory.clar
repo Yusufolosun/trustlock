@@ -195,3 +195,28 @@
     )
   )
 )
+
+;; ========================================
+;; READ-ONLY FUNCTIONS - STATISTICS
+;; ========================================
+
+;; Get factory statistics
+(define-read-only (get-factory-stats)
+  (ok {
+    total-escrows: (var-get escrow-count),
+    contract-deployed-at: block-height ;; Approximation
+  })
+)
+
+;; Get creator statistics
+(define-read-only (get-creator-stats (creator principal))
+  (let (
+    (creator-data (get-creator-escrows creator))
+    (escrow-count (len (get escrow-ids creator-data)))
+  )
+    (ok {
+      total-created: escrow-count,
+      escrow-ids: (get escrow-ids creator-data)
+    })
+  )
+)
