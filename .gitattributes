@@ -1,0 +1,10 @@
+# Force LF line endings for Clarity contracts (required by Clarity compiler)
+*.clar text eol=lf
+
+# TypeScript and config files
+*.ts text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
