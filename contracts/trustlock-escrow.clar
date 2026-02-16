@@ -92,3 +92,42 @@
     (ok escrow-id)
   )
 )
+
+;; ========================================
+;; PUBLIC FUNCTIONS - DEPOSIT
+;; ========================================
+
+;; Deposit funds into escrow
+;; Can only be called by buyer before deadline
+;; @param escrow-id: ID of the escrow to fund
+;; @returns (ok true) on success, error code on failure
+(define-public (deposit (escrow-id uint))
+  (let (
+    ;; Retrieve escrow data
+    (escrow-data (unwrap! (get-escrow escrow-id) (err u201))) ;; ERR-NOT-FUNDED (escrow doesn't exist)
+    (buyer (get buyer escrow-data))
+    (amount (get amount escrow-data))
+    (deadline (get deadline escrow-data))
+    (status (get status escrow-data))
+  )
+    ;; CHECKS: Verify preconditions
+    (asserts! (is-eq tx-sender buyer) (err u100)) ;; ERR-NOT-BUYER
+    (asserts! (is-eq status STATUS-CREATED) (err u200)) ;; ERR-ALREADY-FUNDED
+    (asserts! (< block-height deadline) (err u301)) ;; ERR-DEADLINE-PASSED
+    
+    ;; EFFECTS: Update state before external call
+    (map-set escrows
+      { escrow-id: escrow-id }
+      (merge escrow-data {
+        status: STATUS-FUNDED,
+        funded-at: (some block-height)
+      })
+    )
+    
+    ;; INTERACTIONS: Transfer funds to contract
+    (match (stx-transfer? amount tx-sender (as-contract tx-sender))
+      success (ok true)
+      error (err u400) ;; ERR-TRANSFER-FAILED
+    )
+  )
+)
