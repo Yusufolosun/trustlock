@@ -200,3 +200,47 @@
     )
   )
 )
+
+;; ========================================
+;; READ-ONLY FUNCTIONS
+;; ========================================
+
+;; Get complete escrow information
+;; @param escrow-id: ID of the escrow
+;; @returns Escrow details or error
+(define-read-only (get-info (escrow-id uint))
+  (match (get-escrow escrow-id)
+    escrow-data (ok escrow-data)
+    (err u201) ;; ERR-NOT-FUNDED (escrow doesn't exist)
+  )
+)
+
+;; Get current escrow status
+;; @param escrow-id: ID of the escrow
+;; @returns Status string or error
+(define-read-only (get-status (escrow-id uint))
+  (match (get-escrow escrow-id)
+    escrow-data (ok (get status escrow-data))
+    (err u201)
+  )
+)
+
+;; Check if escrow can be refunded
+;; @param escrow-id: ID of the escrow
+;; @returns true if refundable, false otherwise
+(define-read-only (is-refundable (escrow-id uint))
+  (match (get-escrow escrow-id)
+    escrow-data 
+      (and 
+        (is-eq (get status escrow-data) STATUS-FUNDED)
+        (>= block-height (get deadline escrow-data))
+      )
+    false
+  )
+)
+
+;; Get total number of escrows created
+;; @returns Current escrow nonce
+(define-read-only (get-escrow-count)
+  (ok (var-get escrow-nonce))
+)
