@@ -1,0 +1,118 @@
+# Stacks Network Configuration Files (CRITICAL - NEVER COMMIT)
+# These contain deployment addresses, private keys, and network-specific data
+Mainnet.toml
+Testnet.toml
+Devnet.toml
+settings/Mainnet.toml
+settings/Testnet.toml
+settings/Devnet.toml
+
+# Environment Variables (CRITICAL - NEVER COMMIT)
+# May contain API keys, wallet seeds, deployment secrets
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+
+# Wallet & Private Keys (CRITICAL - NEVER COMMIT)
+*.wallet
+*.keychain
+*-seed.txt
+private-keys/
+wallets/
+
+# Clarinet Cache & Build Artifacts
+.cache/
+.clarinet/
+costs-reports.json
+deployments/
+.requirements/
+
+# Node.js Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log*
+
+# Build Outputs
+dist/
+build/
+out/
+*.js.map
+*.d.ts.map
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE & Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Logs
+logs/
+*.log
+```
+
+**Key Exclusions Explained**:
+
+1. **Network Config Files** (`*.toml`):
+   - Contain deployed contract addresses
+   - May include deployment keys
+   - Network-specific, not portable
+
+2. **Environment Files** (`.env*`):
+   - API keys for block explorers
+   - Wallet mnemonic phrases
+   - RPC endpoints with auth tokens
+
+3. **Wallet Files**:
+   - Private keys in any format
+   - Seed phrases
+   - Keychain data
+
+4. **Clarinet Cache**:
+   - Temporary build artifacts
+   - Changes on every build
+   - Bloats repository unnecessarily
+
+---
+
+### **Step 4: Create Initial Project Structure**
+
+**Directory Structure**:
+```
+trustlock/
+├── .gitignore
+├── README.md
+├── Clarinet.toml
+├── contracts/
+│   ├── trustlock-factory.clar (placeholder)
+│   ├── trustlock-escrow.clar (placeholder)
+│   └── trustlock-traits.clar (placeholder)
+├── tests/
+│   └── .gitkeep
+├── frontend/
+│   └── .gitkeep
+└── docs/
+    └── .gitkeep
