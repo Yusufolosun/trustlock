@@ -62,3 +62,50 @@
     )
   )
 )
+
+;; ========================================
+;; PUBLIC FUNCTIONS - DEPLOYMENT
+;; ========================================
+
+;; Create new escrow instance
+;; @param buyer: Buyer principal address
+;; @param seller: Seller principal address
+;; @param amount: Escrow amount in micro-STX
+;; @param deadline-blocks: Number of blocks until refund allowed
+;; @returns escrow-id on success
+(define-public (create-escrow
+  (buyer principal)
+  (seller principal)
+  (amount uint)
+  (deadline-blocks uint))
+  (let (
+    (escrow-id (get-next-id))
+    (deadline (+ block-height deadline-blocks))
+  )
+    ;; Validate inputs
+    (asserts! (> amount u0) (err u300)) ;; ERR-INVALID-AMOUNT
+    (asserts! (> deadline-blocks u0) (err u301)) ;; ERR-DEADLINE-PASSED
+    (asserts! (not (is-eq buyer seller)) (err u103)) ;; ERR-UNAUTHORIZED
+    
+    ;; Register escrow in factory
+    (map-set escrow-registry
+      { escrow-id: escrow-id }
+      {
+        creator: tx-sender,
+        buyer: buyer,
+        seller: seller,
+        amount: amount,
+        deadline: deadline,
+        created-at: block-height
+      }
+    )
+    
+    ;; Add to creator's list
+    (add-to-creator-list tx-sender escrow-id)
+    
+    ;; Initialize escrow in the escrow contract
+    (try! (contract-call? .trustlock-escrow initialize-escrow buyer seller amount deadline-blocks))
+    
+    (ok escrow-id)
+  )
+)
