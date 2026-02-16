@@ -165,3 +165,38 @@
     )
   )
 )
+
+;; ========================================
+;; PUBLIC FUNCTIONS - REFUND
+;; ========================================
+
+;; Refund funds to buyer after deadline
+;; Can be called by anyone after deadline passes
+;; @param escrow-id: ID of the escrow to refund
+;; @returns (ok true) on success, error code on failure
+(define-public (refund (escrow-id uint))
+  (let (
+    ;; Retrieve escrow data
+    (escrow-data (unwrap! (get-escrow escrow-id) (err u201))) ;; ERR-NOT-FUNDED
+    (buyer (get buyer escrow-data))
+    (amount (get amount escrow-data))
+    (deadline (get deadline escrow-data))
+    (status (get status escrow-data))
+  )
+    ;; CHECKS: Verify preconditions
+    (asserts! (is-eq status STATUS-FUNDED) (err u201)) ;; ERR-NOT-FUNDED
+    (asserts! (>= block-height deadline) (err u302)) ;; ERR-DEADLINE-NOT-REACHED
+    
+    ;; EFFECTS: Update state before external call
+    (map-set escrows
+      { escrow-id: escrow-id }
+      (merge escrow-data { status: STATUS-REFUNDED })
+    )
+    
+    ;; INTERACTIONS: Transfer funds from contract to buyer
+    (match (as-contract (stx-transfer? amount tx-sender buyer))
+      success (ok true)
+      error (err u400) ;; ERR-TRANSFER-FAILED
+    )
+  )
+)
