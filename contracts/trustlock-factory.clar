@@ -109,3 +109,47 @@
     (ok escrow-id)
   )
 )
+
+;; ========================================
+;; READ-ONLY FUNCTIONS - QUERIES
+;; ========================================
+
+;; Get escrow info from registry
+(define-read-only (get-escrow-info (escrow-id uint))
+  (map-get? escrow-registry { escrow-id: escrow-id })
+)
+
+;; Get all escrows created by a principal
+(define-read-only (get-creator-escrows (creator principal))
+  (default-to 
+    { escrow-ids: (list) }
+    (map-get? creator-escrows { creator: creator })
+  )
+)
+
+;; Get total number of escrows created
+(define-read-only (get-total-escrows)
+  (ok (var-get escrow-count))
+)
+
+;; Check if escrow exists in registry
+(define-read-only (escrow-exists (escrow-id uint))
+  (is-some (map-get? escrow-registry { escrow-id: escrow-id }))
+)
+
+;; Get escrow details with live status
+;; Combines registry data with escrow contract state
+(define-read-only (get-full-escrow-details (escrow-id uint))
+  (match (get-escrow-info escrow-id)
+    registry-data
+      (match (contract-call? .trustlock-escrow get-info escrow-id)
+        escrow-data
+          (ok {
+            registry: registry-data,
+            state: escrow-data
+          })
+        error (err error)
+      )
+    (err u201) ;; ERR-NOT-FUNDED (doesn't exist)
+  )
+)
