@@ -91,3 +91,124 @@ Clarinet.test({
         block.receipts[0].result.expectErr().expectUint(103); // ERR-UNAUTHORIZED
     },
 });
+
+// ========================================
+// DEPOSIT TESTS
+// ========================================
+
+Clarinet.test({
+    name: "Escrow: Successful deposit by buyer",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get('deployer')!;
+        const buyer = accounts.get('wallet_1')!;
+        const seller = accounts.get('wallet_2')!;
+        const amount = 1000000;
+
+        let block = chain.mineBlock([
+            // Initialize escrow
+            Tx.contractCall(
+                'trustlock-escrow',
+                'initialize-escrow',
+                [
+                    types.principal(buyer.address),
+                    types.principal(seller.address),
+                    types.uint(amount),
+                    types.uint(100)
+                ],
+                deployer.address
+            ),
+            // Buyer deposits
+            Tx.contractCall(
+                'trustlock-escrow',
+                'deposit',
+                [types.uint(0)],
+                buyer.address
+            )
+        ]);
+
+        block.receipts[1].result.expectOk().expectBool(true);
+
+        // Verify status changed to FUNDED
+        let escrowInfo = chain.callReadOnlyFn(
+            'trustlock-escrow',
+            'get-status',
+            [types.uint(0)],
+            deployer.address
+        );
+
+        assertEquals(escrowInfo.result.expectOk(), '"FUNDED"');
+    },
+});
+
+Clarinet.test({
+    name: "Escrow: Reject deposit from non-buyer",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get('deployer')!;
+        const buyer = accounts.get('wallet_1')!;
+        const seller = accounts.get('wallet_2')!;
+        const attacker = accounts.get('wallet_3')!;
+
+        let block = chain.mineBlock([
+            Tx.contractCall(
+                'trustlock-escrow',
+                'initialize-escrow',
+                [
+                    types.principal(buyer.address),
+                    types.principal(seller.address),
+                    types.uint(1000000),
+                    types.uint(100)
+                ],
+                deployer.address
+            ),
+            // Attacker tries to deposit
+            Tx.contractCall(
+                'trustlock-escrow',
+                'deposit',
+                [types.uint(0)],
+                attacker.address
+            )
+        ]);
+
+        block.receipts[1].result.expectErr().expectUint(100); // ERR-NOT-BUYER
+    },
+});
+
+Clarinet.test({
+    name: "Escrow: Reject double deposit",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get('deployer')!;
+        const buyer = accounts.get('wallet_1')!;
+        const seller = accounts.get('wallet_2')!;
+
+        let block = chain.mineBlock([
+            Tx.contractCall(
+                'trustlock-escrow',
+                'initialize-escrow',
+                [
+                    types.principal(buyer.address),
+                    types.principal(seller.address),
+                    types.uint(1000000),
+                    types.uint(100)
+                ],
+                deployer.address
+            ),
+            // First deposit
+            Tx.contractCall(
+                'trustlock-escrow',
+                'deposit',
+                [types.uint(0)],
+                buyer.address
+            ),
+            // Second deposit attempt
+            Tx.contractCall(
+                'trustlock-escrow',
+                'deposit',
+                [types.uint(0)],
+                buyer.address
+            )
+        ]);
+
+        block.receipts[2].result.expectErr().expectUint(200); // ERR-ALREADY-FUNDED
+    },
+});
+
