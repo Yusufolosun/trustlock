@@ -11,8 +11,6 @@
 (define-constant STATUS-RELEASED "RELEASED")
 (define-constant STATUS-REFUNDED "REFUNDED")
 
-;; Import error codes from traits contract
-(use-trait escrow-trait .trustlock-traits.escrow-trait)
 
 ;; ========================================
 ;; DATA STRUCTURES

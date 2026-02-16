@@ -35,57 +35,43 @@ clarinet test
 clarinet deployments apply -p deployments/default.devnet-plan.yaml
 ```
 
-## Architecture Details
+## Development & Testing
 
-### Trait-Based Design
+### Running Tests
 
-TrustLock uses Clarity traits for maximum composability:
+```bash
+# Run full test suite
+clarinet test
 
-```clarity
-(define-trait escrow-trait
-  (
-    (deposit (uint) (response bool uint))
-    (release () (response bool uint))
-    (refund () (response bool uint))
-    (get-info () (response {...} uint))
-  )
-)
+# Run with coverage report
+clarinet test --coverage
+
+# Run specific test file
+clarinet test --file tests/trustlock-escrow_test.ts
 ```
 
-Any contract implementing this trait can be deployed by the factory and interact with the ecosystem.
+### Test Coverage
 
-### State Machine
+- **Total Tests**: 24+ test cases
+- **Coverage**: 95%+ code coverage target
+- **Categories**: Initialization, deposit, release, refund, factory, integration, edge cases
 
-Escrows follow a simple, secure state machine:
+See [Test Documentation](tests/README.md) for details.
 
+### Local Development
+
+```bash
+# Check contract syntax
+clarinet check
+
+# Start local devnet
+clarinet integrate
+
+# Deploy contracts locally
+clarinet deployments apply -p deployments/default.devnet-plan.yaml
 ```
-CREATED → FUNDED → RELEASED
-            ↓
-         REFUNDED
-```
-
-See [State Machine Documentation](docs/state-machine.md) for detailed transition rules.
-
-### Error Handling
-
-All functions return typed errors with specific codes for debugging:
-- **100-199**: Authorization errors
-- **200-299**: State errors
-- **300-399**: Validation errors
-- **400-499**: Execution errors
-
-Full error reference: [Error Codes Documentation](docs/error-codes.md)
-
-## Testing
-
-Comprehensive test specifications defined for Phase 5 implementation:
-- 40+ unit tests across all functions
-- Edge case coverage
-- Security-focused tests
-- Target: 95% code coverage
-
-See [Test Specifications](docs/test-specifications.md) for details.
 
 ## License
 
 MIT
+
