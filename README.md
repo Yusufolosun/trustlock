@@ -1,77 +1,227 @@
 # TrustLock
 
+[![CI Status](https://github.com/Yusufolosun/trustlock/workflows/TrustLock%20CI/badge.svg)](https://github.com/Yusufolosun/trustlock/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/Yusufolosun/trustlock?include_prereleases)](https://github.com/Yusufolosun/trustlock/releases)
+
 Modular escrow factory for trustless P2P transactions on Stacks.
+
+## ⚠️ Alpha Release Notice
+
+**Current Version**: v0.1.0-alpha
+
+This is an **alpha release** for testing and feedback. **NOT recommended for production use** until security audit is complete.
+
+- ✅ Use on testnet
+- ❌ Do not use for high-value transactions
+- ⏳ Security audit pending
 
 ## Overview
 
 TrustLock enables trustless escrow agreements between two parties without intermediaries. Each escrow is deployed as an independent smart contract with atomic release and refund mechanisms.
 
+### Key Features
+
+- 🔒 **Trustless**: No intermediary needed
+- 🏭 **Factory Pattern**: Deploy unlimited escrow instances
+- 🔐 **Secure**: CEI pattern, authorization checks, state machine
+- ⛽ **Gas Efficient**: Optimized for low transaction costs
+- 🧪 **Well Tested**: 26 tests, 100% pass rate
+- 📚 **Documented**: Comprehensive docs and guides
+
+## Quick Start
+
+```bash
+# Clone and setup
+git clone https://github.com/Yusufolosun/trustlock.git
+cd trustlock
+npm install
+
+# Run tests
+npm test
+
+# Deploy locally
+clarinet integrate
+```
+
+👉 **Full tutorial**: [Quick Start Guide](docs/quickstart.md)
+
 ## Architecture
 
-- **trustlock-factory**: Deploys escrow contract instances
-- **trustlock-escrow**: Core escrow logic (deposit, release, refund)
-- **trustlock-traits**: Interface definitions for composability
+### Contracts
 
-## Status
+**trustlock-traits.clar**
+- Escrow trait interface
+- 15 error codes across 4 categories
 
-🚧 **Under Active Development**
+**trustlock-escrow.clar** (224 lines)
+- Core escrow logic
+- Deposit, release, refund functions
+- Read-only queries
 
-## Requirements
+**trustlock-factory.clar** (~200 lines)
+- Deploy escrow instances
+- Registry and tracking
+- Batch queries for pagination
+
+### State Machine
+
+```
+CREATED → FUNDED → RELEASED
+            ↓
+         REFUNDED
+```
+
+- **CREATED**: Awaiting buyer deposit
+- **FUNDED**: Funds locked, awaiting seller release or deadline
+- **RELEASED**: Funds transferred to seller (terminal)
+- **REFUNDED**: Funds returned to buyer (terminal)
+
+See [State Machine Documentation](docs/state-machine.md) for details.
+
+### Security Patterns
+
+- **CEI Pattern**: Checks-Effects-Interactions (reentrancy protection)
+- **Authorization**: Role-based function access
+- **Deadline Enforcement**: Block-height based (deterministic)
+- **State Validation**: Strict transition rules
+
+See [Security Policy](SECURITY.md) for details.
+
+## Usage Example
+
+```clarity
+;; 1. Create escrow (via factory)
+(contract-call? .trustlock-factory create-escrow
+  'ST1... ;; buyer
+  'ST2... ;; seller
+  u1000000 ;; 1 STX
+  u100) ;; 100 blocks deadline
+;; Returns: (ok u0)  <- escrow-id
+
+;; 2. Buyer deposits
+(contract-call? .trustlock-escrow deposit u0)
+;; Returns: (ok true)
+
+;; 3. Seller releases funds
+(contract-call? .trustlock-escrow release u0)
+;; Returns: (ok true)
+```
+
+## Gas Costs (Estimated)
+
+| Operation | Cost | Notes |
+|-----------|------|-------|
+| Create escrow | ~0.01 STX | Via factory |
+| Deposit | ~0.01-0.015 STX | Buyer deposits funds |
+| Release | ~0.008-0.012 STX | Seller receives funds |
+| Refund | ~0.008-0.012 STX | After deadline |
+| Queries | ~0.001 STX | Read-only functions |
+
+## Development
+
+### Requirements
 
 - [Clarinet](https://github.com/hirosystems/clarinet) >= 2.0
-- Node.js >= 18.x (for frontend)
-- Stacks wallet
+- Node.js >= 18
+- npm >= 9
 
-## Local Development
+### Setup
 
 ```bash
 # Install dependencies
-clarinet integrate
+npm install
+
+# Check contracts
+clarinet check
 
 # Run tests
-clarinet test
+npm test
 
-# Deploy to devnet
-clarinet deployments apply -p deployments/default.devnet-plan.yaml
+# Run tests with coverage
+npm test -- --coverage
 ```
 
-## Development & Testing
+### Testing
 
-### Running Tests
+**Test Suite**: 26 tests across 5 files
 
-```bash
-# Run full test suite
-clarinet test
-
-# Run with coverage report
-clarinet test --coverage
-
-# Run specific test file
-clarinet test --file tests/trustlock-escrow_test.ts
-```
-
-### Test Coverage
-
-- **Total Tests**: 24+ test cases
-- **Coverage**: 95%+ code coverage target
-- **Categories**: Initialization, deposit, release, refund, factory, integration, edge cases
+- ✅ Initialization tests
+- ✅ Deposit function tests
+- ✅ Release function tests
+- ✅ Refund function tests
+- ✅ Factory tests
+- ✅ Integration tests
+- ✅ Edge case tests
 
 See [Test Documentation](tests/README.md) for details.
 
-### Local Development
+### Contributing
 
-```bash
-# Check contract syntax
-clarinet check
+We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
-# Start local devnet
-clarinet integrate
+- Development workflow
+- Code standards
+- Testing requirements
+- Commit conventions
+- PR process
 
-# Deploy contracts locally
-clarinet deployments apply -p deployments/default.devnet-plan.yaml
-```
+## Documentation
+
+- [Quick Start Guide](docs/quickstart.md) - Get started in 10 minutes
+- [State Machine](docs/state-machine.md) - State transitions and rules
+- [Error Codes](docs/error-codes.md) - Complete error reference
+- [Test Specifications](docs/test-specifications.md) - Test case definitions
+- [Deployment Guide](docs/deployment-guide.md) - Devnet/testnet/mainnet deployment
+- [Security Policy](SECURITY.md) - Security considerations and disclosure
+
+## Roadmap
+
+### Phase 1: Foundation ✅ (v0.1.0-alpha)
+- [x] Core escrow contract
+- [x] Factory contract
+- [x] Test suite (26 tests)
+- [x] Documentation
+- [x] CI/CD infrastructure
+
+### Phase 2: Security 🔄 (v0.2.0-beta)
+- [ ] Professional security audit
+- [ ] Testnet deployment
+- [ ] Bug bounty program
+- [ ] Gas optimization review
+
+### Phase 3: Production 📅 (v1.0.0)
+- [ ] Mainnet deployment
+- [ ] Frontend interface
+- [ ] User documentation
+- [ ] Support infrastructure
+
+### Future Enhancements
+- [ ] Multi-party escrows
+- [ ] Milestone-based payments
+- [ ] Dispute resolution mechanism
+- [ ] Escrow templates
 
 ## License
 
-MIT
+MIT License - see [LICENSE](LICENSE) file for details.
 
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/Yusufolosun/trustlock/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Yusufolosun/trustlock/discussions)
+- **Security**: See [SECURITY.md](SECURITY.md)
+
+## Acknowledgments
+
+Built with:
+- [Clarinet](https://github.com/hirosystems/clarinet) - Stacks development environment
+- [Stacks](https://www.stacks.co/) - Bitcoin L2 blockchain
+- [Clarity](https://clarity-lang.org/) - Smart contract language
+
+---
+
+**Status**: Alpha Release (v0.1.0-alpha)
+**Network**: Testnet Only
+**Security Audit**: Pending
+**Production Ready**: No
