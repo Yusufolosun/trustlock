@@ -6,14 +6,16 @@ telemetry = false
 cache_dir = ".cache"
 requirements = []
 
-[contracts.trustlock-factory]
-path = "contracts/trustlock-factory.clar"
+[contracts.trustlock-traits]
+path = "contracts/trustlock-traits.clar"
 clarity_version = 2
 
 [contracts.trustlock-escrow]
 path = "contracts/trustlock-escrow.clar"
 clarity_version = 2
+depends_on = ["trustlock-traits"]
 
-[contracts.trustlock-traits]
-path = "contracts/trustlock-traits.clar"
+[contracts.trustlock-factory]
+path = "contracts/trustlock-factory.clar"
 clarity_version = 2
+depends_on = ["trustlock-traits", "trustlock-escrow"]
