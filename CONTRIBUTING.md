@@ -27,10 +27,12 @@ npm install
 # Install pre-commit hooks
 pip install pre-commit
 pre-commit install
+pre-commit install --hook-type pre-push   # enables test runner on push
 
 # Verify setup
 clarinet check
 npm test
+pre-commit run --all-files               # dry-run all hooks
 ```
 
 ## Development Workflow
