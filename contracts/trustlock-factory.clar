@@ -120,6 +120,29 @@
 )
 
 ;; ========================================
+;; PUBLIC FUNCTIONS - CANCELLATION
+;; ========================================
+
+;; Cancel an escrow that has not been funded yet
+;; Only the original creator can cancel through the factory
+;; @param escrow-id: ID of the escrow to cancel
+;; @returns (ok true) on success, error code on failure
+(define-public (cancel-escrow (escrow-id uint))
+  (let (
+    (registry-data (unwrap! (get-escrow-info escrow-id) ERR-NOT-FOUND))
+    (creator (get creator registry-data))
+  )
+    ;; Only the original creator can cancel via factory
+    (asserts! (is-eq tx-sender creator) ERR-UNAUTHORIZED)
+
+    ;; Delegate to escrow contract (it enforces the CREATED status check)
+    (try! (contract-call? .trustlock-escrow cancel-escrow escrow-id))
+
+    (ok true)
+  )
+)
+
+;; ========================================
 ;; READ-ONLY FUNCTIONS - QUERIES
 ;; ========================================
 
