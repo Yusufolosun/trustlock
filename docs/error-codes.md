@@ -18,6 +18,8 @@
 | `u301` | ERR-DEADLINE-PASSED | Validation | Deadline has already passed |
 | `u302` | ERR-DEADLINE-NOT-REACHED | Validation | Deadline has not been reached yet |
 | `u303` | ERR-AMOUNT-MISMATCH | Validation | Provided amount doesn't match required |
+| `u304` | ERR-AMOUNT-TOO-LOW | Validation | Amount below MIN-ESCROW-AMOUNT (u1000) |
+| `u305` | ERR-DEADLINE-TOO-LONG | Validation | Deadline exceeds MAX-DEADLINE-BLOCKS (u52560) |
 | `u400` | ERR-TRANSFER-FAILED | Execution | STX transfer operation failed |
 | `u401` | ERR-INSUFFICIENT-BALANCE | Execution | Insufficient balance for operation |
 

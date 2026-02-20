@@ -16,6 +16,12 @@
 (define-constant ERR-NOT-FOUND (err u201))
 (define-constant ERR-INVALID-AMOUNT (err u300))
 (define-constant ERR-DEADLINE-PASSED (err u301))
+(define-constant ERR-AMOUNT-TOO-LOW (err u304))
+(define-constant ERR-DEADLINE-TOO-LONG (err u305))
+
+;; Bounds (must match escrow contract)
+(define-constant MIN-ESCROW-AMOUNT u1000)
+(define-constant MAX-DEADLINE-BLOCKS u52560)
 
 ;; Per-creator page size for escrow-id lists
 (define-constant PAGE-SIZE u50)
@@ -124,7 +130,9 @@
   )
     ;; Validate inputs
     (asserts! (> amount u0) ERR-INVALID-AMOUNT)
+    (asserts! (>= amount MIN-ESCROW-AMOUNT) ERR-AMOUNT-TOO-LOW)
     (asserts! (> deadline-blocks u0) ERR-DEADLINE-PASSED)
+    (asserts! (<= deadline-blocks MAX-DEADLINE-BLOCKS) ERR-DEADLINE-TOO-LONG)
     (asserts! (not (is-eq buyer seller)) ERR-UNAUTHORIZED)
     
     ;; Register escrow in factory

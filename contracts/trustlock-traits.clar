@@ -24,6 +24,8 @@
 (define-constant ERR-DEADLINE-PASSED (err u301))
 (define-constant ERR-DEADLINE-NOT-REACHED (err u302))
 (define-constant ERR-AMOUNT-MISMATCH (err u303))
+(define-constant ERR-AMOUNT-TOO-LOW (err u304))
+(define-constant ERR-DEADLINE-TOO-LONG (err u305))
 
 ;; Execution Errors (u400-u499)
 (define-constant ERR-TRANSFER-FAILED (err u400))

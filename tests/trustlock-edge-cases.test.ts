@@ -84,4 +84,26 @@ describe("Edge Cases", () => {
             "escrow-ids": Cl.list([]),
         });
     });
+
+    // ===== AMOUNT & DEADLINE BOUNDS =====
+
+    it("rejects escrow with amount below MIN-ESCROW-AMOUNT (u1000)", () => {
+        const { result } = createEscrow(buyer, seller, 999);
+        expect(result).toBeErr(Cl.uint(304)); // ERR-AMOUNT-TOO-LOW
+    });
+
+    it("accepts escrow at exactly MIN-ESCROW-AMOUNT", () => {
+        const { result, id } = createEscrow(buyer, seller, 1000);
+        expect(result).toBeOk(Cl.uint(id));
+    });
+
+    it("rejects escrow with deadline exceeding MAX-DEADLINE-BLOCKS (u52560)", () => {
+        const { result } = createEscrow(buyer, seller, 1000000, 52561);
+        expect(result).toBeErr(Cl.uint(305)); // ERR-DEADLINE-TOO-LONG
+    });
+
+    it("accepts escrow at exactly MAX-DEADLINE-BLOCKS", () => {
+        const { result, id } = createEscrow(buyer, seller, 1000000, 52560);
+        expect(result).toBeOk(Cl.uint(id));
+    });
 });
