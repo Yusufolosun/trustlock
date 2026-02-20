@@ -39,32 +39,25 @@
 
 ;; Escrow Trait
 ;; Standard interface for all escrow contract implementations
+;; Note: read-only functions (get-info, get-status, etc.) cannot be part of a
+;; Clarity trait -- traits only define public functions.
 (define-trait escrow-trait
   (
     ;; Deposit funds into escrow
-    ;; @param amount: Amount of STX to deposit (in micro-STX)
+    ;; @param escrow-id: ID of the escrow to fund
     ;; @returns (ok true) on success, error code on failure
     (deposit (uint) (response bool uint))
     
     ;; Release escrowed funds to seller
     ;; Can only be called by seller
+    ;; @param escrow-id: ID of the escrow to release
     ;; @returns (ok true) on success, error code on failure
-    (release () (response bool uint))
+    (release (uint) (response bool uint))
     
     ;; Refund escrowed funds to buyer
     ;; Can only be called after deadline has passed
+    ;; @param escrow-id: ID of the escrow to refund
     ;; @returns (ok true) on success, error code on failure
-    (refund () (response bool uint))
-    
-    ;; Get current escrow information
-    ;; @returns Escrow details or error code
-    (get-info () (response {
-      buyer: principal,
-      seller: principal,
-      amount: uint,
-      status: (string-ascii 20),
-      deadline: uint,
-      funded-at: (optional uint)
-    } uint))
+    (refund (uint) (response bool uint))
   )
 )
