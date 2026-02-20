@@ -12,16 +12,21 @@
 (define-constant STATUS-REFUNDED "REFUNDED")
 (define-constant STATUS-CANCELLED "CANCELLED")
 
+;; Contract owner (deployer) - can pause/unpause
+(define-constant CONTRACT-OWNER tx-sender)
+
 ;; Error codes (mirrored from trustlock-traits for local use)
 ;; Authorization errors (u100-u199)
 (define-constant ERR-NOT-BUYER (err u100))
 (define-constant ERR-NOT-SELLER (err u101))
 (define-constant ERR-UNAUTHORIZED (err u103))
 (define-constant ERR-NOT-FACTORY (err u104))
+(define-constant ERR-NOT-OWNER (err u105))
 ;; State errors (u200-u299)
 (define-constant ERR-ALREADY-FUNDED (err u200))
 (define-constant ERR-NOT-FOUND (err u201))
 (define-constant ERR-INVALID-STATE (err u204))
+(define-constant ERR-CONTRACT-PAUSED (err u206))
 ;; Validation errors (u300-u399)
 (define-constant ERR-INVALID-AMOUNT (err u300))
 (define-constant ERR-DEADLINE-PASSED (err u301))
@@ -56,6 +61,9 @@
 
 ;; Escrow counter for unique IDs
 (define-data-var escrow-nonce uint u0)
+
+;; Emergency pause flag
+(define-data-var is-paused bool false)
 
 ;; ========================================
 ;; PRIVATE HELPER FUNCTIONS
@@ -93,6 +101,9 @@
     (escrow-id (get-next-escrow-id))
     (deadline (+ block-height deadline-blocks))
   )
+    ;; Pause check
+    (asserts! (not (var-get is-paused)) ERR-CONTRACT-PAUSED)
+
     ;; Only allow calls through another contract (e.g. the factory).
     ;; Direct calls have tx-sender == contract-caller; inter-contract
     ;; calls set contract-caller to the calling contract.
@@ -150,6 +161,7 @@
     (status (get status escrow-data))
   )
     ;; CHECKS: Verify preconditions
+    (asserts! (not (var-get is-paused)) ERR-CONTRACT-PAUSED)
     (asserts! (is-eq tx-sender buyer) ERR-NOT-BUYER)
     (asserts! (is-eq status STATUS-CREATED) ERR-ALREADY-FUNDED)
     (asserts! (< block-height deadline) ERR-DEADLINE-PASSED)
@@ -196,6 +208,7 @@
     (is-inter-contract (not (is-eq tx-sender contract-caller)))
   )
     ;; CHECKS
+    (asserts! (not (var-get is-paused)) ERR-CONTRACT-PAUSED)
     ;; Allow if buyer calls directly, or if called via another contract
     ;; (the factory enforces its own creator check before delegating here)
     (asserts! (or (is-eq tx-sender buyer) is-inter-contract) ERR-NOT-BUYER)
@@ -235,6 +248,7 @@
     (status (get status escrow-data))
   )
     ;; CHECKS: Verify preconditions
+    (asserts! (not (var-get is-paused)) ERR-CONTRACT-PAUSED)
     (asserts! (is-eq tx-sender seller) ERR-NOT-SELLER)
     (asserts! (is-eq status STATUS-FUNDED) ERR-NOT-FOUND)
     
@@ -278,6 +292,7 @@
     (status (get status escrow-data))
   )
     ;; CHECKS: Verify preconditions
+    (asserts! (not (var-get is-paused)) ERR-CONTRACT-PAUSED)
     (asserts! (is-eq status STATUS-FUNDED) ERR-NOT-FOUND)
     (asserts! (>= block-height deadline) ERR-DEADLINE-NOT-REACHED)
     
@@ -345,4 +360,34 @@
 ;; @returns Current escrow nonce
 (define-read-only (get-escrow-count)
   (ok (var-get escrow-nonce))
+)
+
+;; Check if contract is paused
+(define-read-only (get-paused)
+  (ok (var-get is-paused))
+)
+
+;; ========================================
+;; ADMIN FUNCTIONS - EMERGENCY PAUSE
+;; ========================================
+
+;; Pause the contract - owner only
+;; Blocks all state-changing operations until unpaused
+(define-public (pause)
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT-OWNER) ERR-NOT-OWNER)
+    (var-set is-paused true)
+    (print { event: "contract-paused", paused-by: tx-sender })
+    (ok true)
+  )
+)
+
+;; Unpause the contract - owner only
+(define-public (unpause)
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT-OWNER) ERR-NOT-OWNER)
+    (var-set is-paused false)
+    (print { event: "contract-unpaused", unpaused-by: tx-sender })
+    (ok true)
+  )
 )

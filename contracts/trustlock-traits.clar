@@ -11,6 +11,7 @@
 (define-constant ERR-NOT-PARTY (err u102))
 (define-constant ERR-UNAUTHORIZED (err u103))
 (define-constant ERR-NOT-FACTORY (err u104))
+(define-constant ERR-NOT-OWNER (err u105))
 
 ;; State Errors (u200-u299)
 (define-constant ERR-ALREADY-FUNDED (err u200))
@@ -18,6 +19,7 @@
 (define-constant ERR-ALREADY-RELEASED (err u202))
 (define-constant ERR-ALREADY-REFUNDED (err u203))
 (define-constant ERR-INVALID-STATE (err u204))
+(define-constant ERR-CONTRACT-PAUSED (err u206))
 
 ;; Validation Errors (u300-u399)
 (define-constant ERR-INVALID-AMOUNT (err u300))
