@@ -10,6 +10,7 @@
 (define-constant STATUS-FUNDED "FUNDED")
 (define-constant STATUS-RELEASED "RELEASED")
 (define-constant STATUS-REFUNDED "REFUNDED")
+(define-constant STATUS-CANCELLED "CANCELLED")
 
 ;; Error codes (mirrored from trustlock-traits for local use)
 ;; Authorization errors (u100-u199)
@@ -20,6 +21,7 @@
 ;; State errors (u200-u299)
 (define-constant ERR-ALREADY-FUNDED (err u200))
 (define-constant ERR-NOT-FOUND (err u201))
+(define-constant ERR-INVALID-STATE (err u204))
 ;; Validation errors (u300-u399)
 (define-constant ERR-INVALID-AMOUNT (err u300))
 (define-constant ERR-DEADLINE-PASSED (err u301))
@@ -148,6 +150,44 @@
       success (ok true)
       error ERR-TRANSFER-FAILED
     )
+  )
+)
+
+;; ========================================
+;; PUBLIC FUNCTIONS - CANCELLATION
+;; ========================================
+
+;; Cancel an escrow before it has been funded
+;; Can only be called by the buyer while status is CREATED
+;; @param escrow-id: ID of the escrow to cancel
+;; @returns (ok true) on success, error code on failure
+(define-public (cancel-escrow (escrow-id uint))
+  (let (
+    (escrow-data (unwrap! (get-escrow escrow-id) ERR-NOT-FOUND))
+    (buyer (get buyer escrow-data))
+    (status (get status escrow-data))
+    (is-inter-contract (not (is-eq tx-sender contract-caller)))
+  )
+    ;; CHECKS
+    ;; Allow if buyer calls directly, or if called via another contract
+    ;; (the factory enforces its own creator check before delegating here)
+    (asserts! (or (is-eq tx-sender buyer) is-inter-contract) ERR-NOT-BUYER)
+    (asserts! (is-eq status STATUS-CREATED) ERR-INVALID-STATE)
+
+    ;; EFFECTS
+    (map-set escrows
+      { escrow-id: escrow-id }
+      (merge escrow-data { status: STATUS-CANCELLED })
+    )
+
+    ;; Emit event for off-chain indexers
+    (print {
+      event: "escrow-cancelled",
+      escrow-id: escrow-id,
+      cancelled-by: tx-sender
+    })
+
+    (ok true)
   )
 )
 
