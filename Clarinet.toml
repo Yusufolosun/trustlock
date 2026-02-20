@@ -6,6 +6,9 @@ telemetry = false
 cache_dir = "./.cache"
 requirements = []
 
+# Deploy order: 1) traits  2) escrow  3) factory
+# Any new contracts that depend on traits should declare depends_on accordingly.
+
 [contracts.trustlock-traits]
 path = "contracts/trustlock-traits.clar"
 clarity_version = 2
@@ -27,7 +30,7 @@ depends_on = ["trustlock-traits", "trustlock-escrow"]
 passes = ["check_checker"]
 
 [repl.analysis.check_checker]
-strict = false
+strict = true
 trusted_sender = false
 trusted_caller = false
 callee_filter = false

@@ -26,7 +26,8 @@ wallets/
 .cache/
 .clarinet/
 costs-reports.json
-deployments/
+deployments/*
+!deployments/default.simnet-plan.yaml
 .requirements/
 
 # Node.js Dependencies

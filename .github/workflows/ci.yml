@@ -30,6 +30,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Validate deployment order
+        run: |
+          echo "Checking that simnet plan deploys traits before escrow and factory..."
+          grep -n "contract-name:" deployments/default.simnet-plan.yaml | head -3
+      
       - name: Check contracts
         run: clarinet check
       

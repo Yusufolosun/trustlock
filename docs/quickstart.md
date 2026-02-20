@@ -48,6 +48,8 @@ Expected output:
 
 ### Three Core Contracts
 
+> These must be deployed in order — traits first, then escrow, then factory — because each depends on the one before it.
+
 1. **trustlock-traits.clar**
    - Interface definitions
    - Error codes (15 codes across 4 categories)

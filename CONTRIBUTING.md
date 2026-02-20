@@ -121,6 +121,7 @@ Open Pull Request on GitHub with:
 - **Comments**: Explain complex logic
 - **Error codes**: Use defined constants from traits
 - **Security**: Follow CEI pattern (Checks-Effects-Interactions)
+- **Deployment order**: Contracts must be deployed in dependency order — traits first, then escrow, then factory. The simnet plan in `deployments/default.simnet-plan.yaml` reflects this. Never reorder it without understanding the dependency chain.
 
 ### TypeScript Tests
 
