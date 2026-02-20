@@ -13,8 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restricted `initialize-escrow` to factory-only calls — direct calls now return `ERR-NOT-FACTORY (u104)` (#1)
 - Replaced `unwrap-panic` in `add-to-creator-list` with paginated storage — creators can now have unlimited escrows (#6)
 
-### Added
-- `cancel-escrow` function in the escrow contract — buyer can cancel before funding (#4)
+### Added- Buyer and seller lookup maps to factory contract with paginated storage (#9)
+- `get-buyer-escrows`, `get-seller-escrows`, `get-buyer-escrows-page`, `get-seller-escrows-page` read-only functions (#9)
+- `get-buyer-info`, `get-seller-info` metadata functions for pagination (#9)
+- 6 buyer/seller lookup tests (#9)- `cancel-escrow` function in the escrow contract — buyer can cancel before funding (#4)
 - Factory-level `cancel-escrow` — allows the original creator to cancel through the factory (#4)
 - `STATUS-CANCELLED` terminal state
 - Print events for all state transitions: `escrow-created`, `escrow-funded`, `escrow-released`, `escrow-refunded`, `escrow-cancelled` (#5)
