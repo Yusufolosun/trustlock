@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "test": "vitest run",
-    "test:report": "vitest run -- --coverage --costs",
+    "test:report": "vitest run --coverage",
     "test:watch": "chokidar \"tests/**/*.ts\" \"contracts/**/*.clar\" -c \"npm run test:report\"",
     "lint": "eslint tests/",
     "lint:fix": "eslint tests/ --fix",
@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-vitest": "^0.5.4",
