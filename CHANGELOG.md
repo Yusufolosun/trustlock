@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated `escrow-trait` to match multi-escrow implementation: `release(uint)`, `refund(uint)` now take escrow-id; removed `get-info` (read-only functions cannot be in traits) (#10)
+- Hardened CI security scan: removed `|| true` from npm audit, added blocking `--audit-level=high` check, advisory-only moderate step, gitleaks secret scanning, and Clarinet static analysis (#11)
+- Cached Clarinet binary in CI for faster runs (#11)
 - Replaced all raw `(err uXXX)` with named error constants in escrow and factory contracts (#3)
 - Enabled strict analysis checker in Clarinet config
 - Added deployment order validation step to CI pipeline
