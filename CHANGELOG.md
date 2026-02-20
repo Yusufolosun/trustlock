@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restricted `initialize-escrow` to factory-only calls — direct calls now return `ERR-NOT-FACTORY (u104)` (#1)
 
 ### Changed
+- Replaced all raw `(err uXXX)` with named error constants in escrow and factory contracts (#3)
 - Enabled strict analysis checker in Clarinet config
 - Added deployment order validation step to CI pipeline
 
