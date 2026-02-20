@@ -125,3 +125,115 @@ describe("Factory Contract", () => {
         });
     });
 });
+
+// ===== BUYER / SELLER LOOKUPS =====
+
+describe("Buyer and Seller Lookups", () => {
+    it("tracks escrows by buyer", () => {
+        const { id: id1 } = createEscrow(buyer, seller, 1000000, 100);
+        const { id: id2 } = createEscrow(buyer, seller, 2000000, 200);
+
+        const buyerEscrows = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-buyer-escrows",
+            [Cl.principal(buyer)],
+            deployer
+        );
+        expect(buyerEscrows.result).toBeTuple({
+            "escrow-ids": Cl.list([Cl.uint(id1), Cl.uint(id2)]),
+        });
+    });
+
+    it("tracks escrows by seller", () => {
+        const { id: id1 } = createEscrow(buyer, seller, 1000000, 100);
+        const { id: id2 } = createEscrow(buyer, seller, 3000000, 300);
+
+        const sellerEscrows = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-seller-escrows",
+            [Cl.principal(seller)],
+            deployer
+        );
+        expect(sellerEscrows.result).toBeTuple({
+            "escrow-ids": Cl.list([Cl.uint(id1), Cl.uint(id2)]),
+        });
+    });
+
+    it("returns buyer info with correct totals", () => {
+        createEscrow(buyer, seller, 1000000, 100);
+        createEscrow(buyer, seller, 2000000, 200);
+        createEscrow(buyer, seller, 3000000, 300);
+
+        const info = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-buyer-info",
+            [Cl.principal(buyer)],
+            deployer
+        );
+        expect(info.result).toBeTuple({
+            "total-count": Cl.uint(3),
+            "current-page": Cl.uint(0),
+        });
+    });
+
+    it("returns seller info with correct totals", () => {
+        createEscrow(buyer, seller, 1000000, 100);
+        createEscrow(buyer, seller, 2000000, 200);
+
+        const info = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-seller-info",
+            [Cl.principal(seller)],
+            deployer
+        );
+        expect(info.result).toBeTuple({
+            "total-count": Cl.uint(2),
+            "current-page": Cl.uint(0),
+        });
+    });
+
+    it("returns empty list for buyer with no escrows", () => {
+        const unknownUser = accounts.get("wallet_5")!;
+        const result = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-buyer-escrows",
+            [Cl.principal(unknownUser)],
+            deployer
+        );
+        expect(result.result).toBeTuple({
+            "escrow-ids": Cl.list([]),
+        });
+    });
+
+    it("isolates buyer and seller lists for different principals", () => {
+        const buyer2 = accounts.get("wallet_3")!;
+        const seller2 = accounts.get("wallet_4")!;
+
+        createEscrow(buyer, seller, 1000000, 100);
+        createEscrow(buyer2, seller2, 2000000, 200);
+
+        // buyer should only see their own escrow
+        const buyerInfo = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-buyer-info",
+            [Cl.principal(buyer)],
+            deployer
+        );
+        expect(buyerInfo.result).toBeTuple({
+            "total-count": Cl.uint(1),
+            "current-page": Cl.uint(0),
+        });
+
+        // seller2 should only see their own escrow
+        const seller2Info = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-seller-info",
+            [Cl.principal(seller2)],
+            deployer
+        );
+        expect(seller2Info.result).toBeTuple({
+            "total-count": Cl.uint(1),
+            "current-page": Cl.uint(0),
+        });
+    });
+});
