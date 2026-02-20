@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `.editorconfig` for consistent IDE settings (#13)
 - Added `lint`, `lint:fix`, `format`, and `format:check` scripts to package.json (#13)
 - Added lint and format checks to CI workflow (#13)
+- Configured `@vitest/coverage-v8` coverage provider with lcov, text, and json-summary reporters (#14)
+- Updated `test:report` script to generate actual coverage output (#14)
 - Replaced all raw `(err uXXX)` with named error constants in escrow and factory contracts (#3)
 - Enabled strict analysis checker in Clarinet config
 - Added deployment order validation step to CI pipeline

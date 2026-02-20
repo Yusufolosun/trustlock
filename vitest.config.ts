@@ -10,13 +10,17 @@ export default defineConfig({
         pool: "forks",
         isolate: false,
         maxWorkers: 1,
-        setupFiles: [
-            vitestSetupFilePath,
-        ],
+        setupFiles: [vitestSetupFilePath],
         environmentOptions: {
             clarinet: {
                 ...getClarinetVitestsArgv(),
             },
+        },
+        coverage: {
+            provider: "v8",
+            reporter: ["text", "lcov", "json-summary"],
+            reportsDirectory: "./coverage",
+            include: ["tests/**/*.ts"],
         },
     },
 });
