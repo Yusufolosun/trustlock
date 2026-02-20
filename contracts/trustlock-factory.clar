@@ -17,6 +17,9 @@
 (define-constant ERR-INVALID-AMOUNT (err u300))
 (define-constant ERR-DEADLINE-PASSED (err u301))
 
+;; Per-creator page size for escrow-id lists
+(define-constant PAGE-SIZE u50)
+
 ;; ========================================
 ;; DATA STRUCTURES
 ;; ========================================
@@ -38,10 +41,17 @@
 ;; Escrow counter
 (define-data-var escrow-count uint u0)
 
-;; Track escrows by creator
-(define-map creator-escrows
+;; Track escrows by creator - paginated to avoid list overflow.
+;; Each page holds up to PAGE-SIZE (50) escrow IDs.
+(define-map creator-escrow-pages
+  { creator: principal, page: uint }
+  { escrow-ids: (list 50 uint) }
+)
+
+;; Per-creator metadata: total count and current (latest) page index.
+(define-map creator-info
   { creator: principal }
-  { escrow-ids: (list 100 uint) }
+  { total-count: uint, current-page: uint }
 )
 
 ;; ========================================
@@ -56,18 +66,39 @@
   )
 )
 
-;; Add escrow to creator's list
+;; Add escrow to creator's paginated list.
+;; When the current page is full, a new page is started automatically.
 (define-private (add-to-creator-list (creator principal) (escrow-id uint))
-  (match (map-get? creator-escrows { creator: creator })
-    existing-data
-      (map-set creator-escrows
-        { creator: creator }
-        { escrow-ids: (unwrap-panic (as-max-len? (append (get escrow-ids existing-data) escrow-id) u100)) }
+  (let (
+    (info (default-to { total-count: u0, current-page: u0 }
+            (map-get? creator-info { creator: creator })))
+    (current-page (get current-page info))
+    (total-count (get total-count info))
+    (page-data (default-to { escrow-ids: (list) }
+                 (map-get? creator-escrow-pages { creator: creator, page: current-page })))
+    (current-ids (get escrow-ids page-data))
+  )
+    (if (< (len current-ids) PAGE-SIZE)
+      ;; Room on current page - append
+      (begin
+        (map-set creator-escrow-pages
+          { creator: creator, page: current-page }
+          { escrow-ids: (unwrap-panic (as-max-len? (append current-ids escrow-id) u50)) })
+        (map-set creator-info
+          { creator: creator }
+          { total-count: (+ total-count u1), current-page: current-page })
+        true
       )
-    ;; First escrow for this creator
-    (map-set creator-escrows
-      { creator: creator }
-      { escrow-ids: (list escrow-id) }
+      ;; Current page full - start new page
+      (let ((new-page (+ current-page u1)))
+        (map-set creator-escrow-pages
+          { creator: creator, page: new-page }
+          { escrow-ids: (list escrow-id) })
+        (map-set creator-info
+          { creator: creator }
+          { total-count: (+ total-count u1), current-page: new-page })
+        true
+      )
     )
   )
 )
@@ -151,11 +182,24 @@
   (map-get? escrow-registry { escrow-id: escrow-id })
 )
 
-;; Get all escrows created by a principal
-(define-read-only (get-creator-escrows (creator principal))
+;; Get escrow IDs for a creator on a specific page (0-indexed)
+(define-read-only (get-creator-escrows-page (creator principal) (page uint))
   (default-to 
     { escrow-ids: (list) }
-    (map-get? creator-escrows { creator: creator })
+    (map-get? creator-escrow-pages { creator: creator, page: page })
+  )
+)
+
+;; Backwards-compatible: returns the first page of escrow IDs
+(define-read-only (get-creator-escrows (creator principal))
+  (get-creator-escrows-page creator u0)
+)
+
+;; Get per-creator metadata (total count + current page index)
+(define-read-only (get-creator-info (creator principal))
+  (default-to
+    { total-count: u0, current-page: u0 }
+    (map-get? creator-info { creator: creator })
   )
 )
 
@@ -222,12 +266,11 @@
 ;; Get creator statistics
 (define-read-only (get-creator-stats (creator principal))
   (let (
-    (creator-data (get-creator-escrows creator))
-    (creator-count (len (get escrow-ids creator-data)))
+    (info (get-creator-info creator))
   )
     (ok {
-      total-created: creator-count,
-      escrow-ids: (get escrow-ids creator-data)
+      total-created: (get total-count info),
+      current-page: (get current-page info)
     })
   )
 )
