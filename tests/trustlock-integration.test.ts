@@ -1,47 +1,57 @@
 import { describe, expect, it } from "vitest";
-import { Cl } from "@stacks/transactions";
+import { Cl, ClarityType } from "@stacks/transactions";
 
 const accounts = simnet.getAccounts();
 const deployer = accounts.get("deployer")!;
 const buyer = accounts.get("wallet_1")!;
 const seller = accounts.get("wallet_2")!;
 
+function createEscrow(
+    b: string = buyer,
+    s: string = seller,
+    amount: number = 5000000,
+    deadlineBlocks: number = 100,
+    sender: string = deployer
+): { result: any; id: number } {
+    const { result } = simnet.callPublicFn(
+        "trustlock-factory",
+        "create-escrow",
+        [Cl.principal(b), Cl.principal(s), Cl.uint(amount), Cl.uint(deadlineBlocks)],
+        sender
+    );
+    let id = -1;
+    if (result.type === ClarityType.ResponseOk) {
+        id = Number(result.value.value);
+    }
+    return { result, id };
+}
+
 describe("Integration Tests", () => {
     it("completes full successful escrow flow via factory", () => {
-        const amount = 5000000; // 5 STX
+        const amount = 5000000;
+        const { result: createResult, id } = createEscrow(buyer, seller, amount);
+        expect(createResult).toBeOk(Cl.uint(id));
 
-        // Step 1: Create escrow via factory
-        const create = simnet.callPublicFn(
-            "trustlock-factory",
-            "create-escrow",
-            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(amount), Cl.uint(100)],
-            deployer
-        );
-        expect(create.result).toBeOk(Cl.uint(0));
-
-        // Step 2: Buyer deposits
         const deposit = simnet.callPublicFn(
             "trustlock-escrow",
             "deposit",
-            [Cl.uint(0)],
+            [Cl.uint(id)],
             buyer
         );
         expect(deposit.result).toBeOk(Cl.bool(true));
 
-        // Step 3: Seller releases
         const release = simnet.callPublicFn(
             "trustlock-escrow",
             "release",
-            [Cl.uint(0)],
+            [Cl.uint(id)],
             seller
         );
         expect(release.result).toBeOk(Cl.bool(true));
 
-        // Verify final state
         const status = simnet.callReadOnlyFn(
             "trustlock-escrow",
             "get-status",
-            [Cl.uint(0)],
+            [Cl.uint(id)],
             deployer
         );
         expect(status.result).toBeOk(Cl.stringAscii("RELEASED"));
@@ -49,38 +59,29 @@ describe("Integration Tests", () => {
 
     it("completes full refund flow via factory", () => {
         const deadlineBlocks = 10;
+        const { id } = createEscrow(buyer, seller, 3000000, deadlineBlocks);
 
-        // Create and deposit
-        simnet.callPublicFn(
-            "trustlock-factory",
-            "create-escrow",
-            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(3000000), Cl.uint(deadlineBlocks)],
-            deployer
-        );
         simnet.callPublicFn(
             "trustlock-escrow",
             "deposit",
-            [Cl.uint(0)],
+            [Cl.uint(id)],
             buyer
         );
 
-        // Mine past deadline
         simnet.mineEmptyBlocks(deadlineBlocks + 1);
 
-        // Refund
         const refund = simnet.callPublicFn(
             "trustlock-escrow",
             "refund",
-            [Cl.uint(0)],
+            [Cl.uint(id)],
             buyer
         );
         expect(refund.result).toBeOk(Cl.bool(true));
 
-        // Verify final state
         const status = simnet.callReadOnlyFn(
             "trustlock-escrow",
             "get-status",
-            [Cl.uint(0)],
+            [Cl.uint(id)],
             deployer
         );
         expect(status.result).toBeOk(Cl.stringAscii("REFUNDED"));
@@ -90,43 +91,28 @@ describe("Integration Tests", () => {
         const buyer2 = accounts.get("wallet_3")!;
         const seller2 = accounts.get("wallet_4")!;
 
-        // Create two escrows
-        simnet.callPublicFn(
-            "trustlock-factory",
-            "create-escrow",
-            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(100)],
-            deployer
-        );
-        simnet.callPublicFn(
-            "trustlock-factory",
-            "create-escrow",
-            [Cl.principal(buyer2), Cl.principal(seller2), Cl.uint(2000000), Cl.uint(200)],
-            deployer
-        );
+        const { id: id1 } = createEscrow(buyer, seller, 1000000, 100);
+        const { id: id2 } = createEscrow(buyer2, seller2, 2000000, 200);
 
-        // Deposit to both
-        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(0)], buyer);
-        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(1)], buyer2);
+        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id1)], buyer);
+        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id2)], buyer2);
 
-        // Release first only
-        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(0)], seller);
+        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id1)], seller);
 
-        // Verify escrow 0 is RELEASED
-        const status0 = simnet.callReadOnlyFn(
-            "trustlock-escrow",
-            "get-status",
-            [Cl.uint(0)],
-            deployer
-        );
-        expect(status0.result).toBeOk(Cl.stringAscii("RELEASED"));
-
-        // Verify escrow 1 is still FUNDED
         const status1 = simnet.callReadOnlyFn(
             "trustlock-escrow",
             "get-status",
-            [Cl.uint(1)],
+            [Cl.uint(id1)],
             deployer
         );
-        expect(status1.result).toBeOk(Cl.stringAscii("FUNDED"));
+        expect(status1.result).toBeOk(Cl.stringAscii("RELEASED"));
+
+        const status2 = simnet.callReadOnlyFn(
+            "trustlock-escrow",
+            "get-status",
+            [Cl.uint(id2)],
+            deployer
+        );
+        expect(status2.result).toBeOk(Cl.stringAscii("FUNDED"));
     });
 });
