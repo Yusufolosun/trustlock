@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Corrected deployment order in simnet plan — traits now deploys before escrow and factory (#2)
 - Unignored `deployments/default.simnet-plan.yaml` so the canonical deployment plan is tracked in git
+- Restricted `initialize-escrow` to factory-only calls — direct calls now return `ERR-NOT-FACTORY (u104)` (#1)
 
 ### Changed
 - Enabled strict analysis checker in Clarinet config
