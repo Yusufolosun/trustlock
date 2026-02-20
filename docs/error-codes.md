@@ -9,11 +9,13 @@
 | `u102` | ERR-NOT-PARTY | Authorization | Caller is neither buyer nor seller |
 | `u103` | ERR-UNAUTHORIZED | Authorization | Caller lacks required permissions |
 | `u104` | ERR-NOT-FACTORY | Authorization | Caller is not the factory contract |
+| `u105` | ERR-NOT-OWNER | Authorization | Caller is not the contract owner |
 | `u200` | ERR-ALREADY-FUNDED | State | Escrow has already been funded |
 | `u201` | ERR-NOT-FUNDED | State | Escrow has not been funded yet |
 | `u202` | ERR-ALREADY-RELEASED | State | Funds have already been released |
 | `u203` | ERR-ALREADY-REFUNDED | State | Funds have already been refunded |
 | `u204` | ERR-INVALID-STATE | State | Current state doesn't allow this action |
+| `u206` | ERR-CONTRACT-PAUSED | State | Contract is paused by owner |
 | `u300` | ERR-INVALID-AMOUNT | Validation | Amount is invalid or out of range |
 | `u301` | ERR-DEADLINE-PASSED | Validation | Deadline has already passed |
 | `u302` | ERR-DEADLINE-NOT-REACHED | Validation | Deadline has not been reached yet |
