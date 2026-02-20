@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 5 event verification tests validating print event payloads (#5)
 - Paginated creator-escrow storage with `get-creator-escrows-page` and `get-creator-info` read-only functions (#6)
 - Pagination overflow test (52 escrows across 2 pages) (#6)
+- `MIN-ESCROW-AMOUNT` (u1000 / 0.001 STX) and `MAX-DEADLINE-BLOCKS` (u52560 / ~1 year) bounds (#7)
+- `ERR-AMOUNT-TOO-LOW` (u304) and `ERR-DEADLINE-TOO-LONG` (u305) error codes (#7)
+- 4 boundary tests: below min, at min, above max, at max (#7)
 
 ### Changed
 - Replaced all raw `(err uXXX)` with named error constants in escrow and factory contracts (#3)
