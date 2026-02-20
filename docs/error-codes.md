@@ -8,6 +8,7 @@
 | `u101` | ERR-NOT-SELLER | Authorization | Caller is not the designated seller |
 | `u102` | ERR-NOT-PARTY | Authorization | Caller is neither buyer nor seller |
 | `u103` | ERR-UNAUTHORIZED | Authorization | Caller lacks required permissions |
+| `u104` | ERR-NOT-FACTORY | Authorization | Caller is not the factory contract |
 | `u200` | ERR-ALREADY-FUNDED | State | Escrow has already been funded |
 | `u201` | ERR-NOT-FUNDED | State | Escrow has not been funded yet |
 | `u202` | ERR-ALREADY-RELEASED | State | Funds have already been released |
