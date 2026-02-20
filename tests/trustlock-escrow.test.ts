@@ -17,13 +17,13 @@ function createEscrow(
     s: string = seller,
     amount: number = 1000000,
     deadlineBlocks: number = 100,
-    sender: string = deployer
+    sender: string = deployer,
 ): { result: any; id: number } {
     const { result } = simnet.callPublicFn(
         "trustlock-factory",
         "create-escrow",
         [Cl.principal(b), Cl.principal(s), Cl.uint(amount), Cl.uint(deadlineBlocks)],
-        sender
+        sender,
     );
     let id = -1;
     if (result.type === ClarityType.ResponseOk) {
@@ -34,12 +34,7 @@ function createEscrow(
 
 /** Fund an escrow (buyer deposits the required amount). */
 function fundEscrow(escrowId: number, b: string = buyer) {
-    return simnet.callPublicFn(
-        "trustlock-escrow",
-        "deposit",
-        [Cl.uint(escrowId)],
-        b
-    );
+    return simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(escrowId)], b);
 }
 
 // ===== INITIALIZATION =====
@@ -49,12 +44,7 @@ describe("Escrow Initialization", () => {
         const { result, id } = createEscrow();
         expect(result).toBeOk(Cl.uint(id));
 
-        const info = simnet.callReadOnlyFn(
-            "trustlock-escrow",
-            "get-info",
-            [Cl.uint(id)],
-            deployer
-        );
+        const info = simnet.callReadOnlyFn("trustlock-escrow", "get-info", [Cl.uint(id)], deployer);
         expect(info.result).toBeOk(expect.anything());
     });
 
@@ -63,7 +53,7 @@ describe("Escrow Initialization", () => {
             "trustlock-escrow",
             "initialize-escrow",
             [Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(100)],
-            deployer
+            deployer,
         );
         expect(result).toBeErr(Cl.uint(104));
     });
@@ -73,7 +63,7 @@ describe("Escrow Initialization", () => {
             "trustlock-factory",
             "create-escrow",
             [Cl.principal(buyer), Cl.principal(seller), Cl.uint(0), Cl.uint(100)],
-            deployer
+            deployer,
         );
         expect(result).toBeErr(Cl.uint(300));
     });
@@ -83,7 +73,7 @@ describe("Escrow Initialization", () => {
             "trustlock-factory",
             "create-escrow",
             [Cl.principal(buyer), Cl.principal(buyer), Cl.uint(1000000), Cl.uint(100)],
-            deployer
+            deployer,
         );
         expect(result).toBeErr(Cl.uint(103));
     });
@@ -93,7 +83,7 @@ describe("Escrow Initialization", () => {
             "trustlock-factory",
             "create-escrow",
             [Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(0)],
-            deployer
+            deployer,
         );
         expect(result).toBeErr(Cl.uint(301));
     });
@@ -111,7 +101,7 @@ describe("Escrow Deposit", () => {
             "trustlock-escrow",
             "get-status",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(status.result).toBeOk(Cl.stringAscii("FUNDED"));
     });
@@ -122,7 +112,7 @@ describe("Escrow Deposit", () => {
             "trustlock-escrow",
             "deposit",
             [Cl.uint(id)],
-            attacker
+            attacker,
         );
         expect(result).toBeErr(Cl.uint(100));
     });
@@ -140,7 +130,7 @@ describe("Escrow Deposit", () => {
             "trustlock-escrow",
             "deposit",
             [Cl.uint(999)],
-            buyer
+            buyer,
         );
         expect(result).toBeErr(Cl.uint(201));
     });
@@ -157,7 +147,7 @@ describe("Escrow Release", () => {
             "trustlock-escrow",
             "release",
             [Cl.uint(id)],
-            seller
+            seller,
         );
         expect(result).toBeOk(Cl.bool(true));
 
@@ -165,7 +155,7 @@ describe("Escrow Release", () => {
             "trustlock-escrow",
             "get-status",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(status.result).toBeOk(Cl.stringAscii("RELEASED"));
     });
@@ -178,7 +168,7 @@ describe("Escrow Release", () => {
             "trustlock-escrow",
             "release",
             [Cl.uint(id)],
-            attacker
+            attacker,
         );
         expect(result).toBeErr(Cl.uint(101));
     });
@@ -190,7 +180,7 @@ describe("Escrow Release", () => {
             "trustlock-escrow",
             "release",
             [Cl.uint(id)],
-            seller
+            seller,
         );
         expect(result).toBeErr(Cl.uint(201));
     });
@@ -206,19 +196,14 @@ describe("Escrow Refund", () => {
 
         simnet.mineEmptyBlocks(deadlineBlocks + 1);
 
-        const { result } = simnet.callPublicFn(
-            "trustlock-escrow",
-            "refund",
-            [Cl.uint(id)],
-            buyer
-        );
+        const { result } = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
         expect(result).toBeOk(Cl.bool(true));
 
         const status = simnet.callReadOnlyFn(
             "trustlock-escrow",
             "get-status",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(status.result).toBeOk(Cl.stringAscii("REFUNDED"));
     });
@@ -227,12 +212,7 @@ describe("Escrow Refund", () => {
         const { id } = createEscrow(buyer, seller, 1000000, 100);
         fundEscrow(id);
 
-        const { result } = simnet.callPublicFn(
-            "trustlock-escrow",
-            "refund",
-            [Cl.uint(id)],
-            buyer
-        );
+        const { result } = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
         expect(result).toBeErr(Cl.uint(302));
     });
 
@@ -241,12 +221,7 @@ describe("Escrow Refund", () => {
 
         simnet.mineEmptyBlocks(200);
 
-        const { result } = simnet.callPublicFn(
-            "trustlock-escrow",
-            "refund",
-            [Cl.uint(id)],
-            buyer
-        );
+        const { result } = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
         expect(result).toBeErr(Cl.uint(201));
     });
 });
@@ -261,7 +236,7 @@ describe("Escrow Cancellation", () => {
             "trustlock-escrow",
             "cancel-escrow",
             [Cl.uint(id)],
-            buyer
+            buyer,
         );
         expect(result).toBeOk(Cl.bool(true));
 
@@ -269,7 +244,7 @@ describe("Escrow Cancellation", () => {
             "trustlock-escrow",
             "get-status",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(status.result).toBeOk(Cl.stringAscii("CANCELLED"));
     });
@@ -281,7 +256,7 @@ describe("Escrow Cancellation", () => {
             "trustlock-escrow",
             "cancel-escrow",
             [Cl.uint(id)],
-            attacker
+            attacker,
         );
         expect(result).toBeErr(Cl.uint(100));
     });
@@ -294,7 +269,7 @@ describe("Escrow Cancellation", () => {
             "trustlock-escrow",
             "cancel-escrow",
             [Cl.uint(id)],
-            buyer
+            buyer,
         );
         expect(result).toBeErr(Cl.uint(204));
     });
@@ -314,7 +289,7 @@ describe("Escrow Cancellation", () => {
             "trustlock-factory",
             "cancel-escrow",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(result).toBeOk(Cl.bool(true));
 
@@ -322,7 +297,7 @@ describe("Escrow Cancellation", () => {
             "trustlock-escrow",
             "get-status",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(status.result).toBeOk(Cl.stringAscii("CANCELLED"));
     });
@@ -334,7 +309,7 @@ describe("Escrow Cancellation", () => {
             "trustlock-factory",
             "cancel-escrow",
             [Cl.uint(id)],
-            attacker
+            attacker,
         );
         expect(result).toBeErr(Cl.uint(103));
     });
@@ -355,7 +330,7 @@ describe("Event Emissions", () => {
             "trustlock-factory",
             "create-escrow",
             [Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(100)],
-            deployer
+            deployer,
         );
         const fields = getPrintEventData(events);
         expect(fields).toBeDefined();
@@ -384,7 +359,7 @@ describe("Event Emissions", () => {
             "trustlock-escrow",
             "release",
             [Cl.uint(id)],
-            seller
+            seller,
         );
         const fields = getPrintEventData(events);
         expect(fields).toBeDefined();
@@ -400,12 +375,7 @@ describe("Event Emissions", () => {
         const { id } = createEscrow(buyer, seller, amount, deadlineBlocks);
         fundEscrow(id);
         simnet.mineEmptyBlocks(deadlineBlocks + 1);
-        const { events } = simnet.callPublicFn(
-            "trustlock-escrow",
-            "refund",
-            [Cl.uint(id)],
-            buyer
-        );
+        const { events } = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
         const fields = getPrintEventData(events);
         expect(fields).toBeDefined();
         expect(fields!["event"]).toStrictEqual(Cl.stringAscii("escrow-refunded"));
@@ -420,7 +390,7 @@ describe("Event Emissions", () => {
             "trustlock-escrow",
             "cancel-escrow",
             [Cl.uint(id)],
-            buyer
+            buyer,
         );
         const fields = getPrintEventData(events);
         expect(fields).toBeDefined();
@@ -433,21 +403,15 @@ describe("Event Emissions", () => {
 
 describe("Emergency Pause", () => {
     it("allows owner to pause the contract", () => {
-        const { result } = simnet.callPublicFn(
-            "trustlock-escrow", "pause", [], deployer
-        );
+        const { result } = simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
         expect(result).toBeOk(Cl.bool(true));
 
-        const paused = simnet.callReadOnlyFn(
-            "trustlock-escrow", "get-paused", [], deployer
-        );
+        const paused = simnet.callReadOnlyFn("trustlock-escrow", "get-paused", [], deployer);
         expect(paused.result).toBeOk(Cl.bool(true));
     });
 
     it("rejects pause from non-owner", () => {
-        const { result } = simnet.callPublicFn(
-            "trustlock-escrow", "pause", [], attacker
-        );
+        const { result } = simnet.callPublicFn("trustlock-escrow", "pause", [], attacker);
         expect(result).toBeErr(Cl.uint(105)); // ERR-NOT-OWNER
     });
 
@@ -456,9 +420,7 @@ describe("Emergency Pause", () => {
 
         simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
 
-        const { result } = simnet.callPublicFn(
-            "trustlock-escrow", "deposit", [Cl.uint(id)], buyer
-        );
+        const { result } = simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id)], buyer);
         expect(result).toBeErr(Cl.uint(206)); // ERR-CONTRACT-PAUSED
     });
 
@@ -469,7 +431,10 @@ describe("Emergency Pause", () => {
         simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
 
         const { result } = simnet.callPublicFn(
-            "trustlock-escrow", "release", [Cl.uint(id)], seller
+            "trustlock-escrow",
+            "release",
+            [Cl.uint(id)],
+            seller,
         );
         expect(result).toBeErr(Cl.uint(206));
     });
@@ -482,9 +447,7 @@ describe("Emergency Pause", () => {
 
         simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
 
-        const { result } = simnet.callPublicFn(
-            "trustlock-escrow", "refund", [Cl.uint(id)], buyer
-        );
+        const { result } = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
         expect(result).toBeErr(Cl.uint(206));
     });
 
@@ -494,7 +457,10 @@ describe("Emergency Pause", () => {
         simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
 
         const { result } = simnet.callPublicFn(
-            "trustlock-escrow", "cancel-escrow", [Cl.uint(id)], buyer
+            "trustlock-escrow",
+            "cancel-escrow",
+            [Cl.uint(id)],
+            buyer,
         );
         expect(result).toBeErr(Cl.uint(206));
     });
@@ -506,9 +472,7 @@ describe("Emergency Pause", () => {
         simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
 
         // Verify blocked
-        const blocked = simnet.callPublicFn(
-            "trustlock-escrow", "deposit", [Cl.uint(id)], buyer
-        );
+        const blocked = simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id)], buyer);
         expect(blocked.result).toBeErr(Cl.uint(206));
 
         // Unpause
@@ -524,13 +488,14 @@ describe("Emergency Pause", () => {
 
         simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
 
-        const info = simnet.callReadOnlyFn(
-            "trustlock-escrow", "get-info", [Cl.uint(id)], deployer
-        );
+        const info = simnet.callReadOnlyFn("trustlock-escrow", "get-info", [Cl.uint(id)], deployer);
         expect(info.result).toBeOk(expect.anything());
 
         const status = simnet.callReadOnlyFn(
-            "trustlock-escrow", "get-status", [Cl.uint(id)], deployer
+            "trustlock-escrow",
+            "get-status",
+            [Cl.uint(id)],
+            deployer,
         );
         expect(status.result).toBeOk(Cl.stringAscii("CREATED"));
     });

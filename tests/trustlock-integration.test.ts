@@ -11,13 +11,13 @@ function createEscrow(
     s: string = seller,
     amount: number = 5000000,
     deadlineBlocks: number = 100,
-    sender: string = deployer
+    sender: string = deployer,
 ): { result: any; id: number } {
     const { result } = simnet.callPublicFn(
         "trustlock-factory",
         "create-escrow",
         [Cl.principal(b), Cl.principal(s), Cl.uint(amount), Cl.uint(deadlineBlocks)],
-        sender
+        sender,
     );
     let id = -1;
     if (result.type === ClarityType.ResponseOk) {
@@ -32,27 +32,17 @@ describe("Integration Tests", () => {
         const { result: createResult, id } = createEscrow(buyer, seller, amount);
         expect(createResult).toBeOk(Cl.uint(id));
 
-        const deposit = simnet.callPublicFn(
-            "trustlock-escrow",
-            "deposit",
-            [Cl.uint(id)],
-            buyer
-        );
+        const deposit = simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id)], buyer);
         expect(deposit.result).toBeOk(Cl.bool(true));
 
-        const release = simnet.callPublicFn(
-            "trustlock-escrow",
-            "release",
-            [Cl.uint(id)],
-            seller
-        );
+        const release = simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], seller);
         expect(release.result).toBeOk(Cl.bool(true));
 
         const status = simnet.callReadOnlyFn(
             "trustlock-escrow",
             "get-status",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(status.result).toBeOk(Cl.stringAscii("RELEASED"));
     });
@@ -61,28 +51,18 @@ describe("Integration Tests", () => {
         const deadlineBlocks = 10;
         const { id } = createEscrow(buyer, seller, 3000000, deadlineBlocks);
 
-        simnet.callPublicFn(
-            "trustlock-escrow",
-            "deposit",
-            [Cl.uint(id)],
-            buyer
-        );
+        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id)], buyer);
 
         simnet.mineEmptyBlocks(deadlineBlocks + 1);
 
-        const refund = simnet.callPublicFn(
-            "trustlock-escrow",
-            "refund",
-            [Cl.uint(id)],
-            buyer
-        );
+        const refund = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
         expect(refund.result).toBeOk(Cl.bool(true));
 
         const status = simnet.callReadOnlyFn(
             "trustlock-escrow",
             "get-status",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(status.result).toBeOk(Cl.stringAscii("REFUNDED"));
     });
@@ -103,7 +83,7 @@ describe("Integration Tests", () => {
             "trustlock-escrow",
             "get-status",
             [Cl.uint(id1)],
-            deployer
+            deployer,
         );
         expect(status1.result).toBeOk(Cl.stringAscii("RELEASED"));
 
@@ -111,7 +91,7 @@ describe("Integration Tests", () => {
             "trustlock-escrow",
             "get-status",
             [Cl.uint(id2)],
-            deployer
+            deployer,
         );
         expect(status2.result).toBeOk(Cl.stringAscii("FUNDED"));
     });
