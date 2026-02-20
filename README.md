@@ -50,6 +50,8 @@ clarinet integrate
 
 ### Contracts
 
+> **Deployment order matters**: traits → escrow → factory. The trait definition must exist on-chain before any contract that implements it.
+
 **trustlock-traits.clar**
 - Escrow trait interface
 - 15 error codes across 4 categories
