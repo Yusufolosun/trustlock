@@ -250,3 +250,92 @@ describe("Escrow Refund", () => {
         expect(result).toBeErr(Cl.uint(201));
     });
 });
+
+// ===== CANCELLATION =====
+
+describe("Escrow Cancellation", () => {
+    it("allows buyer to cancel a CREATED escrow", () => {
+        const { id } = createEscrow();
+
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "cancel-escrow",
+            [Cl.uint(id)],
+            buyer
+        );
+        expect(result).toBeOk(Cl.bool(true));
+
+        const status = simnet.callReadOnlyFn(
+            "trustlock-escrow",
+            "get-status",
+            [Cl.uint(id)],
+            deployer
+        );
+        expect(status.result).toBeOk(Cl.stringAscii("CANCELLED"));
+    });
+
+    it("rejects cancellation by non-buyer", () => {
+        const { id } = createEscrow();
+
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "cancel-escrow",
+            [Cl.uint(id)],
+            attacker
+        );
+        expect(result).toBeErr(Cl.uint(100));
+    });
+
+    it("rejects cancellation after funding", () => {
+        const { id } = createEscrow();
+        fundEscrow(id);
+
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "cancel-escrow",
+            [Cl.uint(id)],
+            buyer
+        );
+        expect(result).toBeErr(Cl.uint(204));
+    });
+
+    it("rejects deposit on cancelled escrow", () => {
+        const { id } = createEscrow();
+        simnet.callPublicFn("trustlock-escrow", "cancel-escrow", [Cl.uint(id)], buyer);
+
+        const { result } = fundEscrow(id);
+        expect(result).toBeErr(Cl.uint(200));
+    });
+
+    it("allows creator to cancel via factory", () => {
+        const { id } = createEscrow();
+
+        const { result } = simnet.callPublicFn(
+            "trustlock-factory",
+            "cancel-escrow",
+            [Cl.uint(id)],
+            deployer
+        );
+        expect(result).toBeOk(Cl.bool(true));
+
+        const status = simnet.callReadOnlyFn(
+            "trustlock-escrow",
+            "get-status",
+            [Cl.uint(id)],
+            deployer
+        );
+        expect(status.result).toBeOk(Cl.stringAscii("CANCELLED"));
+    });
+
+    it("rejects factory cancel by non-creator", () => {
+        const { id } = createEscrow();
+
+        const { result } = simnet.callPublicFn(
+            "trustlock-factory",
+            "cancel-escrow",
+            [Cl.uint(id)],
+            attacker
+        );
+        expect(result).toBeErr(Cl.uint(103));
+    });
+});
