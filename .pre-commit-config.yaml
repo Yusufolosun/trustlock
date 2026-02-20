@@ -1,28 +1,41 @@
 # TrustLock Pre-Commit Hooks
-# Install: pre-commit install
+# Install: pip install pre-commit && pre-commit install
 # Run manually: pre-commit run --all-files
 
 repos:
+  # ── General file hygiene ──────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        files: \.(clar|ts|md|yml|yaml)$
-      
+        args: [--markdown-linebreak-ext=md]
+        files: \.(clar|ts|md|yml|yaml|json)$
+
       - id: end-of-file-fixer
-        files: \.(clar|ts|md|yml|yaml)$
-      
+        files: \.(clar|ts|md|yml|yaml|json)$
+
+      - id: check-merge-conflict
+
+      - id: detect-private-key
+
       - id: check-yaml
-      
+
+      - id: check-toml
+
       - id: check-added-large-files
         args: ['--maxkb=500']
-      
-      - id: check-merge-conflict
-      
+
       - id: mixed-line-ending
         args: ['--fix=lf']
         files: \.clar$
 
+  # ── Secret scanning ──────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+
+  # ── Clarity contracts ────────────────────────────────────
   - repo: local
     hooks:
       - id: clarinet-check
@@ -31,10 +44,19 @@ repos:
         language: system
         pass_filenames: false
         files: \.clar$
-      
+
       - id: prevent-secret-commit
         name: Prevent Secret Files
         entry: bash -c 'if git diff --cached --name-only | grep -E "(Mainnet|Testnet|Devnet)\.toml|\.env"; then echo "ERROR: Attempting to commit secret files!"; exit 1; fi'
         language: system
         pass_filenames: false
         always_run: true
+
+      # ── TypeScript tests (pre-push only) ───────────────────
+      - id: vitest-run
+        name: Run tests
+        entry: npm test
+        language: system
+        files: '\.(test\.ts|clar)$'
+        pass_filenames: false
+        stages: [pre-push]
