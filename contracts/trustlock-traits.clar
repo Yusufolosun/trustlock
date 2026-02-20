@@ -10,6 +10,7 @@
 (define-constant ERR-NOT-SELLER (err u101))
 (define-constant ERR-NOT-PARTY (err u102))
 (define-constant ERR-UNAUTHORIZED (err u103))
+(define-constant ERR-NOT-FACTORY (err u104))
 
 ;; State Errors (u200-u299)
 (define-constant ERR-ALREADY-FUNDED (err u200))

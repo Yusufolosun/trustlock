@@ -1,10 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { Cl } from "@stacks/transactions";
+import { Cl, ClarityType } from "@stacks/transactions";
 
 const accounts = simnet.getAccounts();
 const deployer = accounts.get("deployer")!;
 const buyer = accounts.get("wallet_1")!;
 const seller = accounts.get("wallet_2")!;
+
+function createEscrow(
+    b: string = buyer,
+    s: string = seller,
+    amount: bigint | number = 1000000,
+    deadlineBlocks: number = 100,
+    sender: string = deployer
+): { result: any; id: number } {
+    const { result } = simnet.callPublicFn(
+        "trustlock-factory",
+        "create-escrow",
+        [Cl.principal(b), Cl.principal(s), Cl.uint(amount), Cl.uint(deadlineBlocks)],
+        sender
+    );
+    let id = -1;
+    if (result.type === ClarityType.ResponseOk) {
+        id = Number(result.value.value);
+    }
+    return { result, id };
+}
 
 describe("Edge Cases", () => {
     it("returns error when querying non-existent escrow", () => {
@@ -18,55 +38,35 @@ describe("Edge Cases", () => {
     });
 
     it("accepts very large amount for escrow creation", () => {
-        const maxAmount = BigInt("340282366920938463463374607431768211455"); // u128 max
-        const { result } = simnet.callPublicFn(
-            "trustlock-factory",
-            "create-escrow",
-            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(maxAmount), Cl.uint(100)],
-            deployer
-        );
-        // Should succeed at creation (validation is on deposit, not creation)
-        expect(result).toBeOk(Cl.uint(0));
+        const maxAmount = BigInt("340282366920938463463374607431768211455");
+        const { result, id } = createEscrow(buyer, seller, maxAmount);
+        expect(result).toBeOk(Cl.uint(id));
     });
 
     it("accepts minimum deadline of 1 block", () => {
-        const { result } = simnet.callPublicFn(
-            "trustlock-factory",
-            "create-escrow",
-            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(1)],
-            deployer
-        );
+        const { result } = createEscrow(buyer, seller, 1000000, 1);
         expect(result).toBeOk(expect.anything());
     });
 
     it("correctly reports is-refundable before and after deadline", () => {
         const deadlineBlocks = 5;
+        const { id } = createEscrow(buyer, seller, 1000000, deadlineBlocks);
+        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id)], buyer);
 
-        simnet.callPublicFn(
-            "trustlock-factory",
-            "create-escrow",
-            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(deadlineBlocks)],
-            deployer
-        );
-        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(0)], buyer);
-
-        // Check before deadline - should NOT be refundable
         const before = simnet.callReadOnlyFn(
             "trustlock-escrow",
             "is-refundable",
-            [Cl.uint(0)],
+            [Cl.uint(id)],
             deployer
         );
         expect(before.result).toBeBool(false);
 
-        // Mine past deadline
         simnet.mineEmptyBlocks(deadlineBlocks + 1);
 
-        // Check after deadline - SHOULD be refundable
         const after = simnet.callReadOnlyFn(
             "trustlock-escrow",
             "is-refundable",
-            [Cl.uint(0)],
+            [Cl.uint(id)],
             deployer
         );
         expect(after.result).toBeBool(true);

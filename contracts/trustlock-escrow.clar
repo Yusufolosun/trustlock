@@ -69,6 +69,11 @@
     (escrow-id (get-next-escrow-id))
     (deadline (+ block-height deadline-blocks))
   )
+    ;; Only allow calls through another contract (e.g. the factory).
+    ;; Direct calls have tx-sender == contract-caller; inter-contract
+    ;; calls set contract-caller to the calling contract.
+    (asserts! (not (is-eq tx-sender contract-caller)) (err u104)) ;; ERR-NOT-FACTORY
+
     ;; Validate inputs
     (asserts! (> amount u0) (err u300)) ;; ERR-INVALID-AMOUNT
     (asserts! (> deadline-blocks u0) (err u301)) ;; ERR-DEADLINE-PASSED

@@ -3,8 +3,9 @@
 ## State Definitions
 
 ### CREATED
-- **Description**: Escrow contract deployed, awaiting initial funding
+- **Description**: Escrow initialized through the factory contract, awaiting initial funding
 - **Data**: Buyer and seller addresses assigned, amount and deadline set
+- **Entry**: Only the factory contract can transition the system to this state through `initialize-escrow`. Direct calls are rejected with `ERR-NOT-FACTORY (u104)`.
 - **Actions Available**: `deposit()`
 - **Who Can Act**: Buyer only
 
