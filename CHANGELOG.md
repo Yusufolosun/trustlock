@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added- Buyer and seller lookup maps to factory contract with paginated storage (#9)
 - `get-buyer-escrows`, `get-seller-escrows`, `get-buyer-escrows-page`, `get-seller-escrows-page` read-only functions (#9)
 - `get-buyer-info`, `get-seller-info` metadata functions for pagination (#9)
-- 6 buyer/seller lookup tests (#9)- `cancel-escrow` function in the escrow contract — buyer can cancel before funding (#4)
+- 6 buyer/seller lookup tests (#9)\n- Escrow contract now declares `(impl-trait .trustlock-traits.escrow-trait)` for compiler-enforced trait compliance (#10)\n- `cancel-escrow` function in the escrow contract — buyer can cancel before funding (#4)
 - Factory-level `cancel-escrow` — allows the original creator to cancel through the factory (#4)
 - `STATUS-CANCELLED` terminal state
 - Print events for all state transitions: `escrow-created`, `escrow-funded`, `escrow-released`, `escrow-refunded`, `escrow-cancelled` (#5)
@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Emergency pause procedure documented in SECURITY.md (#8)
 
 ### Changed
+- Updated `escrow-trait` to match multi-escrow implementation: `release(uint)`, `refund(uint)` now take escrow-id; removed `get-info` (read-only functions cannot be in traits) (#10)
 - Replaced all raw `(err uXXX)` with named error constants in escrow and factory contracts (#3)
 - Enabled strict analysis checker in Clarinet config
 - Added deployment order validation step to CI pipeline
