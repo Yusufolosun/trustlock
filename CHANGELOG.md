@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Corrected deployment order in simnet plan — traits now deploys before escrow and factory (#2)
+- Unignored `deployments/default.simnet-plan.yaml` so the canonical deployment plan is tracked in git
+
+### Changed
+- Enabled strict analysis checker in Clarinet config
+- Added deployment order validation step to CI pipeline
+
+### Documentation
+- Expanded deployment guide with dependency chain explanation
+- Noted deployment order in README, quickstart, and contributing docs
+
 ## [0.1.0-alpha] - 2026-02-16
 
 ### Added
