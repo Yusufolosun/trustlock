@@ -54,6 +54,22 @@ TrustLock implements multiple security patterns:
    - Block-height based deadlines
    - Deterministic refund conditions
 
+5. **Emergency Pause**
+   - Contract owner can pause all state-changing operations
+   - Read-only functions remain accessible during pause
+   - Pause/unpause emits events for monitoring
+
+### Emergency Pause Procedure
+
+If a vulnerability is discovered:
+
+1. **Owner calls `pause()`** on both escrow and factory contracts
+2. All `deposit`, `release`, `refund`, `cancel-escrow`, `create-escrow` calls are blocked with `ERR-CONTRACT-PAUSED (u206)`
+3. Read-only queries (`get-info`, `get-status`, etc.) continue to work normally
+4. Once the fix is deployed, owner calls `unpause()` to resume operations
+
+> **Note**: The owner is currently set to the deployer principal. In production, this should be upgraded to a multisig or DAO address.
+
 ### Known Limitations
 
 **Alpha Release Limitations**:
@@ -66,13 +82,14 @@ TrustLock implements multiple security patterns:
 - No dispute resolution mechanism
 - No cancellation before funding
 - Fixed deadline (cannot be extended)
+- Single-owner pause (should be upgraded to multisig for mainnet)
 
 ### Audit Status
 
 | Area | Status | Notes |
 |------|--------|-------|
 | Smart Contracts | ⏳ Pending | Awaiting professional audit |
-| Test Coverage | ✅ Complete | 26 tests, 100% pass rate |
+| Test Coverage | ✅ Complete | 53 tests, 100% pass rate |
 | Documentation | ✅ Complete | Architecture and security docs |
 | Deployment | ⏳ Pending | Testnet deployment planned |
 

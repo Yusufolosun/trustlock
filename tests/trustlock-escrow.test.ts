@@ -428,3 +428,110 @@ describe("Event Emissions", () => {
         expect(fields!["escrow-id"]).toStrictEqual(Cl.uint(id));
     });
 });
+
+// ===== EMERGENCY PAUSE =====
+
+describe("Emergency Pause", () => {
+    it("allows owner to pause the contract", () => {
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow", "pause", [], deployer
+        );
+        expect(result).toBeOk(Cl.bool(true));
+
+        const paused = simnet.callReadOnlyFn(
+            "trustlock-escrow", "get-paused", [], deployer
+        );
+        expect(paused.result).toBeOk(Cl.bool(true));
+    });
+
+    it("rejects pause from non-owner", () => {
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow", "pause", [], attacker
+        );
+        expect(result).toBeErr(Cl.uint(105)); // ERR-NOT-OWNER
+    });
+
+    it("blocks deposit when paused", () => {
+        const { id } = createEscrow();
+
+        simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
+
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow", "deposit", [Cl.uint(id)], buyer
+        );
+        expect(result).toBeErr(Cl.uint(206)); // ERR-CONTRACT-PAUSED
+    });
+
+    it("blocks release when paused", () => {
+        const { id } = createEscrow();
+        fundEscrow(id);
+
+        simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
+
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow", "release", [Cl.uint(id)], seller
+        );
+        expect(result).toBeErr(Cl.uint(206));
+    });
+
+    it("blocks refund when paused", () => {
+        const deadlineBlocks = 10;
+        const { id } = createEscrow(buyer, seller, 1000000, deadlineBlocks);
+        fundEscrow(id);
+        simnet.mineEmptyBlocks(deadlineBlocks + 1);
+
+        simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
+
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow", "refund", [Cl.uint(id)], buyer
+        );
+        expect(result).toBeErr(Cl.uint(206));
+    });
+
+    it("blocks cancellation when paused", () => {
+        const { id } = createEscrow();
+
+        simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
+
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow", "cancel-escrow", [Cl.uint(id)], buyer
+        );
+        expect(result).toBeErr(Cl.uint(206));
+    });
+
+    it("resumes operations after unpause", () => {
+        const { id } = createEscrow();
+
+        // Pause
+        simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
+
+        // Verify blocked
+        const blocked = simnet.callPublicFn(
+            "trustlock-escrow", "deposit", [Cl.uint(id)], buyer
+        );
+        expect(blocked.result).toBeErr(Cl.uint(206));
+
+        // Unpause
+        simnet.callPublicFn("trustlock-escrow", "unpause", [], deployer);
+
+        // Verify resumed
+        const { result } = fundEscrow(id);
+        expect(result).toBeOk(Cl.bool(true));
+    });
+
+    it("read-only functions work while paused", () => {
+        const { id } = createEscrow();
+
+        simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
+
+        const info = simnet.callReadOnlyFn(
+            "trustlock-escrow", "get-info", [Cl.uint(id)], deployer
+        );
+        expect(info.result).toBeOk(expect.anything());
+
+        const status = simnet.callReadOnlyFn(
+            "trustlock-escrow", "get-status", [Cl.uint(id)], deployer
+        );
+        expect(status.result).toBeOk(Cl.stringAscii("CREATED"));
+    });
+});

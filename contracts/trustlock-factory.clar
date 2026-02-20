@@ -11,9 +11,14 @@
 ;; CONSTANTS
 ;; ========================================
 
+;; Contract owner (deployer) - can pause/unpause
+(define-constant CONTRACT-OWNER tx-sender)
+
 ;; Error codes (mirrored from trustlock-traits for local use)
 (define-constant ERR-UNAUTHORIZED (err u103))
+(define-constant ERR-NOT-OWNER (err u105))
 (define-constant ERR-NOT-FOUND (err u201))
+(define-constant ERR-CONTRACT-PAUSED (err u206))
 (define-constant ERR-INVALID-AMOUNT (err u300))
 (define-constant ERR-DEADLINE-PASSED (err u301))
 (define-constant ERR-AMOUNT-TOO-LOW (err u304))
@@ -46,6 +51,9 @@
 
 ;; Escrow counter
 (define-data-var escrow-count uint u0)
+
+;; Emergency pause flag
+(define-data-var is-paused bool false)
 
 ;; Track escrows by creator - paginated to avoid list overflow.
 ;; Each page holds up to PAGE-SIZE (50) escrow IDs.
@@ -128,6 +136,9 @@
     (escrow-id (get-next-id))
     (deadline (+ block-height deadline-blocks))
   )
+    ;; Pause check
+    (asserts! (not (var-get is-paused)) ERR-CONTRACT-PAUSED)
+
     ;; Validate inputs
     (asserts! (> amount u0) ERR-INVALID-AMOUNT)
     (asserts! (>= amount MIN-ESCROW-AMOUNT) ERR-AMOUNT-TOO-LOW)
@@ -171,6 +182,9 @@
     (registry-data (unwrap! (get-escrow-info escrow-id) ERR-NOT-FOUND))
     (creator (get creator registry-data))
   )
+    ;; Pause check
+    (asserts! (not (var-get is-paused)) ERR-CONTRACT-PAUSED)
+
     ;; Only the original creator can cancel via factory
     (asserts! (is-eq tx-sender creator) ERR-UNAUTHORIZED)
 
@@ -280,5 +294,34 @@
       total-created: (get total-count info),
       current-page: (get current-page info)
     })
+  )
+)
+
+;; Check if contract is paused
+(define-read-only (get-paused)
+  (ok (var-get is-paused))
+)
+
+;; ========================================
+;; ADMIN FUNCTIONS - EMERGENCY PAUSE
+;; ========================================
+
+;; Pause the contract - owner only
+(define-public (pause)
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT-OWNER) ERR-NOT-OWNER)
+    (var-set is-paused true)
+    (print { event: "factory-paused", paused-by: tx-sender })
+    (ok true)
+  )
+)
+
+;; Unpause the contract - owner only
+(define-public (unpause)
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT-OWNER) ERR-NOT-OWNER)
+    (var-set is-paused false)
+    (print { event: "factory-unpaused", unpaused-by: tx-sender })
+    (ok true)
   )
 )

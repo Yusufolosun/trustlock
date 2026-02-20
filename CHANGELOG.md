@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MIN-ESCROW-AMOUNT` (u1000 / 0.001 STX) and `MAX-DEADLINE-BLOCKS` (u52560 / ~1 year) bounds (#7)
 - `ERR-AMOUNT-TOO-LOW` (u304) and `ERR-DEADLINE-TOO-LONG` (u305) error codes (#7)
 - 4 boundary tests: below min, at min, above max, at max (#7)
+- Emergency pause mechanism: `pause()`, `unpause()`, `get-paused()` on both escrow and factory contracts (#8)
+- `CONTRACT-OWNER` constant and `is-paused` data var for owner-gated circuit breaker (#8)
+- `ERR-NOT-OWNER` (u105) and `ERR-CONTRACT-PAUSED` (u206) error codes (#8)
+- 8 pause lifecycle tests: pause/unpause by owner, rejection by non-owner, blocks on all 4 operations, resume after unpause, read-only access during pause (#8)
+- Emergency pause procedure documented in SECURITY.md (#8)
 
 ### Changed
 - Replaced all raw `(err uXXX)` with named error constants in escrow and factory contracts (#3)
