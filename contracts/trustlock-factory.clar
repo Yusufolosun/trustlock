@@ -8,6 +8,16 @@
 
 
 ;; ========================================
+;; CONSTANTS
+;; ========================================
+
+;; Error codes (mirrored from trustlock-traits for local use)
+(define-constant ERR-UNAUTHORIZED (err u103))
+(define-constant ERR-NOT-FOUND (err u201))
+(define-constant ERR-INVALID-AMOUNT (err u300))
+(define-constant ERR-DEADLINE-PASSED (err u301))
+
+;; ========================================
 ;; DATA STRUCTURES
 ;; ========================================
 
@@ -82,9 +92,9 @@
     (deadline (+ block-height deadline-blocks))
   )
     ;; Validate inputs
-    (asserts! (> amount u0) (err u300)) ;; ERR-INVALID-AMOUNT
-    (asserts! (> deadline-blocks u0) (err u301)) ;; ERR-DEADLINE-PASSED
-    (asserts! (not (is-eq buyer seller)) (err u103)) ;; ERR-UNAUTHORIZED
+    (asserts! (> amount u0) ERR-INVALID-AMOUNT)
+    (asserts! (> deadline-blocks u0) ERR-DEADLINE-PASSED)
+    (asserts! (not (is-eq buyer seller)) ERR-UNAUTHORIZED)
     
     ;; Register escrow in factory
     (map-set escrow-registry
@@ -149,7 +159,7 @@
           })
         error (err error)
       )
-    (err u201) ;; ERR-NOT-FUNDED (doesn't exist)
+    ERR-NOT-FOUND
   )
 )
 
