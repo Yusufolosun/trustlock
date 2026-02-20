@@ -339,3 +339,92 @@ describe("Escrow Cancellation", () => {
         expect(result).toBeErr(Cl.uint(103));
     });
 });
+
+// ===== EVENT EMISSIONS =====
+
+/** Extract the print event tuple fields from a transaction's events array. */
+function getPrintEventData(events: any[]): Record<string, any> | undefined {
+    const printEvt = events.find((e: any) => e.event === "print_event");
+    // data.value is { type: "tuple", value: { field1: ClarityValue, ... } }
+    return printEvt?.data?.value?.value;
+}
+
+describe("Event Emissions", () => {
+    it("emits escrow-created event on initialization", () => {
+        const { events } = simnet.callPublicFn(
+            "trustlock-factory",
+            "create-escrow",
+            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(100)],
+            deployer
+        );
+        const fields = getPrintEventData(events);
+        expect(fields).toBeDefined();
+        expect(fields!["event"]).toStrictEqual(Cl.stringAscii("escrow-created"));
+        expect(fields!["buyer"]).toStrictEqual(Cl.principal(buyer));
+        expect(fields!["seller"]).toStrictEqual(Cl.principal(seller));
+        expect(fields!["amount"]).toStrictEqual(Cl.uint(1000000));
+    });
+
+    it("emits escrow-funded event on deposit", () => {
+        const { id } = createEscrow(buyer, seller, 2000000);
+        const { events } = fundEscrow(id);
+        const fields = getPrintEventData(events);
+        expect(fields).toBeDefined();
+        expect(fields!["event"]).toStrictEqual(Cl.stringAscii("escrow-funded"));
+        expect(fields!["escrow-id"]).toStrictEqual(Cl.uint(id));
+        expect(fields!["buyer"]).toStrictEqual(Cl.principal(buyer));
+        expect(fields!["amount"]).toStrictEqual(Cl.uint(2000000));
+    });
+
+    it("emits escrow-released event on release", () => {
+        const amount = 3000000;
+        const { id } = createEscrow(buyer, seller, amount);
+        fundEscrow(id);
+        const { events } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "release",
+            [Cl.uint(id)],
+            seller
+        );
+        const fields = getPrintEventData(events);
+        expect(fields).toBeDefined();
+        expect(fields!["event"]).toStrictEqual(Cl.stringAscii("escrow-released"));
+        expect(fields!["escrow-id"]).toStrictEqual(Cl.uint(id));
+        expect(fields!["seller"]).toStrictEqual(Cl.principal(seller));
+        expect(fields!["amount"]).toStrictEqual(Cl.uint(amount));
+    });
+
+    it("emits escrow-refunded event on refund", () => {
+        const amount = 4000000;
+        const deadlineBlocks = 10;
+        const { id } = createEscrow(buyer, seller, amount, deadlineBlocks);
+        fundEscrow(id);
+        simnet.mineEmptyBlocks(deadlineBlocks + 1);
+        const { events } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "refund",
+            [Cl.uint(id)],
+            buyer
+        );
+        const fields = getPrintEventData(events);
+        expect(fields).toBeDefined();
+        expect(fields!["event"]).toStrictEqual(Cl.stringAscii("escrow-refunded"));
+        expect(fields!["escrow-id"]).toStrictEqual(Cl.uint(id));
+        expect(fields!["buyer"]).toStrictEqual(Cl.principal(buyer));
+        expect(fields!["amount"]).toStrictEqual(Cl.uint(amount));
+    });
+
+    it("emits escrow-cancelled event on cancellation", () => {
+        const { id } = createEscrow();
+        const { events } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "cancel-escrow",
+            [Cl.uint(id)],
+            buyer
+        );
+        const fields = getPrintEventData(events);
+        expect(fields).toBeDefined();
+        expect(fields!["event"]).toStrictEqual(Cl.stringAscii("escrow-cancelled"));
+        expect(fields!["escrow-id"]).toStrictEqual(Cl.uint(id));
+    });
+});
