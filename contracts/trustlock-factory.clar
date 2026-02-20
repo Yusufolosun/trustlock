@@ -68,6 +68,28 @@
   { total-count: uint, current-page: uint }
 )
 
+;; Track escrows by buyer - paginated like creator lists.
+(define-map buyer-escrow-pages
+  { buyer: principal, page: uint }
+  { escrow-ids: (list 50 uint) }
+)
+
+(define-map buyer-info
+  { buyer: principal }
+  { total-count: uint, current-page: uint }
+)
+
+;; Track escrows by seller - paginated like creator lists.
+(define-map seller-escrow-pages
+  { seller: principal, page: uint }
+  { escrow-ids: (list 50 uint) }
+)
+
+(define-map seller-info
+  { seller: principal }
+  { total-count: uint, current-page: uint }
+)
+
 ;; ========================================
 ;; PRIVATE HELPER FUNCTIONS
 ;; ========================================
@@ -117,6 +139,74 @@
   )
 )
 
+;; Add escrow to a buyer's paginated list.
+(define-private (add-to-buyer-list (the-buyer principal) (escrow-id uint))
+  (let (
+    (info (default-to { total-count: u0, current-page: u0 }
+            (map-get? buyer-info { buyer: the-buyer })))
+    (current-page (get current-page info))
+    (total-count (get total-count info))
+    (page-data (default-to { escrow-ids: (list) }
+                 (map-get? buyer-escrow-pages { buyer: the-buyer, page: current-page })))
+    (current-ids (get escrow-ids page-data))
+  )
+    (if (< (len current-ids) PAGE-SIZE)
+      (begin
+        (map-set buyer-escrow-pages
+          { buyer: the-buyer, page: current-page }
+          { escrow-ids: (unwrap-panic (as-max-len? (append current-ids escrow-id) u50)) })
+        (map-set buyer-info
+          { buyer: the-buyer }
+          { total-count: (+ total-count u1), current-page: current-page })
+        true
+      )
+      (let ((new-page (+ current-page u1)))
+        (map-set buyer-escrow-pages
+          { buyer: the-buyer, page: new-page }
+          { escrow-ids: (list escrow-id) })
+        (map-set buyer-info
+          { buyer: the-buyer }
+          { total-count: (+ total-count u1), current-page: new-page })
+        true
+      )
+    )
+  )
+)
+
+;; Add escrow to a seller's paginated list.
+(define-private (add-to-seller-list (the-seller principal) (escrow-id uint))
+  (let (
+    (info (default-to { total-count: u0, current-page: u0 }
+            (map-get? seller-info { seller: the-seller })))
+    (current-page (get current-page info))
+    (total-count (get total-count info))
+    (page-data (default-to { escrow-ids: (list) }
+                 (map-get? seller-escrow-pages { seller: the-seller, page: current-page })))
+    (current-ids (get escrow-ids page-data))
+  )
+    (if (< (len current-ids) PAGE-SIZE)
+      (begin
+        (map-set seller-escrow-pages
+          { seller: the-seller, page: current-page }
+          { escrow-ids: (unwrap-panic (as-max-len? (append current-ids escrow-id) u50)) })
+        (map-set seller-info
+          { seller: the-seller }
+          { total-count: (+ total-count u1), current-page: current-page })
+        true
+      )
+      (let ((new-page (+ current-page u1)))
+        (map-set seller-escrow-pages
+          { seller: the-seller, page: new-page }
+          { escrow-ids: (list escrow-id) })
+        (map-set seller-info
+          { seller: the-seller }
+          { total-count: (+ total-count u1), current-page: new-page })
+        true
+      )
+    )
+  )
+)
+
 ;; ========================================
 ;; PUBLIC FUNCTIONS - DEPLOYMENT
 ;; ========================================
@@ -159,8 +249,10 @@
       }
     )
     
-    ;; Add to creator's list
+    ;; Add to creator's, buyer's, and seller's lists
     (add-to-creator-list tx-sender escrow-id)
+    (add-to-buyer-list buyer escrow-id)
+    (add-to-seller-list seller escrow-id)
     
     ;; Initialize escrow in the escrow contract
     (try! (contract-call? .trustlock-escrow initialize-escrow buyer seller amount deadline-blocks))
@@ -222,6 +314,48 @@
   (default-to
     { total-count: u0, current-page: u0 }
     (map-get? creator-info { creator: creator })
+  )
+)
+
+;; Get escrow IDs for a buyer on a specific page (0-indexed)
+(define-read-only (get-buyer-escrows-page (the-buyer principal) (page uint))
+  (default-to
+    { escrow-ids: (list) }
+    (map-get? buyer-escrow-pages { buyer: the-buyer, page: page })
+  )
+)
+
+;; Backwards-compatible: returns the first page of buyer escrow IDs
+(define-read-only (get-buyer-escrows (the-buyer principal))
+  (get-buyer-escrows-page the-buyer u0)
+)
+
+;; Get per-buyer metadata (total count + current page index)
+(define-read-only (get-buyer-info (the-buyer principal))
+  (default-to
+    { total-count: u0, current-page: u0 }
+    (map-get? buyer-info { buyer: the-buyer })
+  )
+)
+
+;; Get escrow IDs for a seller on a specific page (0-indexed)
+(define-read-only (get-seller-escrows-page (the-seller principal) (page uint))
+  (default-to
+    { escrow-ids: (list) }
+    (map-get? seller-escrow-pages { seller: the-seller, page: page })
+  )
+)
+
+;; Backwards-compatible: returns the first page of seller escrow IDs
+(define-read-only (get-seller-escrows (the-seller principal))
+  (get-seller-escrows-page the-seller u0)
+)
+
+;; Get per-seller metadata (total count + current page index)
+(define-read-only (get-seller-info (the-seller principal))
+  (default-to
+    { total-count: u0, current-page: u0 }
+    (map-get? seller-info { seller: the-seller })
   )
 )
 
