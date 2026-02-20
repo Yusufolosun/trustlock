@@ -11,6 +11,22 @@
 (define-constant STATUS-RELEASED "RELEASED")
 (define-constant STATUS-REFUNDED "REFUNDED")
 
+;; Error codes (mirrored from trustlock-traits for local use)
+;; Authorization errors (u100-u199)
+(define-constant ERR-NOT-BUYER (err u100))
+(define-constant ERR-NOT-SELLER (err u101))
+(define-constant ERR-UNAUTHORIZED (err u103))
+(define-constant ERR-NOT-FACTORY (err u104))
+;; State errors (u200-u299)
+(define-constant ERR-ALREADY-FUNDED (err u200))
+(define-constant ERR-NOT-FOUND (err u201))
+;; Validation errors (u300-u399)
+(define-constant ERR-INVALID-AMOUNT (err u300))
+(define-constant ERR-DEADLINE-PASSED (err u301))
+(define-constant ERR-DEADLINE-NOT-REACHED (err u302))
+;; Execution errors (u400-u499)
+(define-constant ERR-TRANSFER-FAILED (err u400))
+
 
 ;; ========================================
 ;; DATA STRUCTURES
@@ -72,12 +88,12 @@
     ;; Only allow calls through another contract (e.g. the factory).
     ;; Direct calls have tx-sender == contract-caller; inter-contract
     ;; calls set contract-caller to the calling contract.
-    (asserts! (not (is-eq tx-sender contract-caller)) (err u104)) ;; ERR-NOT-FACTORY
+    (asserts! (not (is-eq tx-sender contract-caller)) ERR-NOT-FACTORY)
 
     ;; Validate inputs
-    (asserts! (> amount u0) (err u300)) ;; ERR-INVALID-AMOUNT
-    (asserts! (> deadline-blocks u0) (err u301)) ;; ERR-DEADLINE-PASSED
-    (asserts! (not (is-eq buyer seller)) (err u103)) ;; ERR-UNAUTHORIZED (same address)
+    (asserts! (> amount u0) ERR-INVALID-AMOUNT)
+    (asserts! (> deadline-blocks u0) ERR-DEADLINE-PASSED)
+    (asserts! (not (is-eq buyer seller)) ERR-UNAUTHORIZED)
     
     ;; Create escrow entry
     (map-set escrows
@@ -107,16 +123,16 @@
 (define-public (deposit (escrow-id uint))
   (let (
     ;; Retrieve escrow data
-    (escrow-data (unwrap! (get-escrow escrow-id) (err u201))) ;; ERR-NOT-FUNDED (escrow doesn't exist)
+    (escrow-data (unwrap! (get-escrow escrow-id) ERR-NOT-FOUND))
     (buyer (get buyer escrow-data))
     (amount (get amount escrow-data))
     (deadline (get deadline escrow-data))
     (status (get status escrow-data))
   )
     ;; CHECKS: Verify preconditions
-    (asserts! (is-eq tx-sender buyer) (err u100)) ;; ERR-NOT-BUYER
-    (asserts! (is-eq status STATUS-CREATED) (err u200)) ;; ERR-ALREADY-FUNDED
-    (asserts! (< block-height deadline) (err u301)) ;; ERR-DEADLINE-PASSED
+    (asserts! (is-eq tx-sender buyer) ERR-NOT-BUYER)
+    (asserts! (is-eq status STATUS-CREATED) ERR-ALREADY-FUNDED)
+    (asserts! (< block-height deadline) ERR-DEADLINE-PASSED)
     
     ;; EFFECTS: Update state before external call
     (map-set escrows
@@ -130,7 +146,7 @@
     ;; INTERACTIONS: Transfer funds to contract
     (match (stx-transfer? amount tx-sender (as-contract tx-sender))
       success (ok true)
-      error (err u400) ;; ERR-TRANSFER-FAILED
+      error ERR-TRANSFER-FAILED
     )
   )
 )
@@ -146,14 +162,14 @@
 (define-public (release (escrow-id uint))
   (let (
     ;; Retrieve escrow data
-    (escrow-data (unwrap! (get-escrow escrow-id) (err u201))) ;; ERR-NOT-FUNDED
+    (escrow-data (unwrap! (get-escrow escrow-id) ERR-NOT-FOUND))
     (seller (get seller escrow-data))
     (amount (get amount escrow-data))
     (status (get status escrow-data))
   )
     ;; CHECKS: Verify preconditions
-    (asserts! (is-eq tx-sender seller) (err u101)) ;; ERR-NOT-SELLER
-    (asserts! (is-eq status STATUS-FUNDED) (err u201)) ;; ERR-NOT-FUNDED
+    (asserts! (is-eq tx-sender seller) ERR-NOT-SELLER)
+    (asserts! (is-eq status STATUS-FUNDED) ERR-NOT-FOUND)
     
     ;; EFFECTS: Update state before external call
     (map-set escrows
@@ -164,7 +180,7 @@
     ;; INTERACTIONS: Transfer funds from contract to seller
     (match (as-contract (stx-transfer? amount tx-sender seller))
       success (ok true)
-      error (err u400) ;; ERR-TRANSFER-FAILED
+      error ERR-TRANSFER-FAILED
     )
   )
 )
@@ -180,15 +196,15 @@
 (define-public (refund (escrow-id uint))
   (let (
     ;; Retrieve escrow data
-    (escrow-data (unwrap! (get-escrow escrow-id) (err u201))) ;; ERR-NOT-FUNDED
+    (escrow-data (unwrap! (get-escrow escrow-id) ERR-NOT-FOUND))
     (buyer (get buyer escrow-data))
     (amount (get amount escrow-data))
     (deadline (get deadline escrow-data))
     (status (get status escrow-data))
   )
     ;; CHECKS: Verify preconditions
-    (asserts! (is-eq status STATUS-FUNDED) (err u201)) ;; ERR-NOT-FUNDED
-    (asserts! (>= block-height deadline) (err u302)) ;; ERR-DEADLINE-NOT-REACHED
+    (asserts! (is-eq status STATUS-FUNDED) ERR-NOT-FOUND)
+    (asserts! (>= block-height deadline) ERR-DEADLINE-NOT-REACHED)
     
     ;; EFFECTS: Update state before external call
     (map-set escrows
@@ -199,7 +215,7 @@
     ;; INTERACTIONS: Transfer funds from contract to buyer
     (match (as-contract (stx-transfer? amount tx-sender buyer))
       success (ok true)
-      error (err u400) ;; ERR-TRANSFER-FAILED
+      error ERR-TRANSFER-FAILED
     )
   )
 )
@@ -214,7 +230,7 @@
 (define-read-only (get-info (escrow-id uint))
   (match (get-escrow escrow-id)
     escrow-data (ok escrow-data)
-    (err u201) ;; ERR-NOT-FUNDED (escrow doesn't exist)
+    ERR-NOT-FOUND
   )
 )
 
@@ -224,7 +240,7 @@
 (define-read-only (get-status (escrow-id uint))
   (match (get-escrow escrow-id)
     escrow-data (ok (get status escrow-data))
-    (err u201)
+    ERR-NOT-FOUND
   )
 )
 
