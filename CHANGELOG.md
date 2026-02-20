@@ -39,6 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cached Clarinet binary in CI for faster runs (#11)
 - Updated `.pre-commit-config.yaml` with detect-private-key, check-toml, gitleaks scanning, and pre-push test runner hook (#12)
 - Updated CONTRIBUTING.md with accurate pre-commit setup instructions (#12)
+- Added ESLint (v9 flat config) with typescript-eslint and eslint-plugin-vitest for TypeScript test linting (#13)
+- Added Prettier with project conventions (4-space indent, double quotes, trailing commas) (#13)
+- Added `.editorconfig` for consistent IDE settings (#13)
+- Added `lint`, `lint:fix`, `format`, and `format:check` scripts to package.json (#13)
+- Added lint and format checks to CI workflow (#13)
 - Replaced all raw `(err uXXX)` with named error constants in escrow and factory contracts (#3)
 - Enabled strict analysis checker in Clarinet config
 - Added deployment order validation step to CI pipeline

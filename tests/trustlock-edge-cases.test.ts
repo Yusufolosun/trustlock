@@ -11,13 +11,13 @@ function createEscrow(
     s: string = seller,
     amount: bigint | number = 1000000,
     deadlineBlocks: number = 100,
-    sender: string = deployer
+    sender: string = deployer,
 ): { result: any; id: number } {
     const { result } = simnet.callPublicFn(
         "trustlock-factory",
         "create-escrow",
         [Cl.principal(b), Cl.principal(s), Cl.uint(amount), Cl.uint(deadlineBlocks)],
-        sender
+        sender,
     );
     let id = -1;
     if (result.type === ClarityType.ResponseOk) {
@@ -32,7 +32,7 @@ describe("Edge Cases", () => {
             "trustlock-escrow",
             "get-info",
             [Cl.uint(999)],
-            deployer
+            deployer,
         );
         expect(result.result).toBeErr(Cl.uint(201));
     });
@@ -57,7 +57,7 @@ describe("Edge Cases", () => {
             "trustlock-escrow",
             "is-refundable",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(before.result).toBeBool(false);
 
@@ -67,7 +67,7 @@ describe("Edge Cases", () => {
             "trustlock-escrow",
             "is-refundable",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(after.result).toBeBool(true);
     });
@@ -78,7 +78,7 @@ describe("Edge Cases", () => {
             "trustlock-factory",
             "get-creator-escrows",
             [Cl.principal(newUser)],
-            deployer
+            deployer,
         );
         expect(result.result).toBeTuple({
             "escrow-ids": Cl.list([]),

@@ -7,7 +7,11 @@
   "scripts": {
     "test": "vitest run",
     "test:report": "vitest run -- --coverage --costs",
-    "test:watch": "chokidar \"tests/**/*.ts\" \"contracts/**/*.clar\" -c \"npm run test:report\""
+    "test:watch": "chokidar \"tests/**/*.ts\" \"contracts/**/*.clar\" -c \"npm run test:report\"",
+    "lint": "eslint tests/",
+    "lint:fix": "eslint tests/ --fix",
+    "format": "prettier --write tests/",
+    "format:check": "prettier --check tests/"
   },
   "dependencies": {
     "@stacks/clarinet-sdk": "^3.9.0",
@@ -16,5 +20,13 @@
     "chokidar-cli": "^3.0.0",
     "vitest": "^4.0.7",
     "vitest-environment-clarinet": "^3.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vitest": "^0.5.4",
+    "prettier": "^3.8.1",
+    "typescript-eslint": "^8.56.0"
   }
 }

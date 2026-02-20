@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 const accounts = simnet.getAccounts();
-const deployer = accounts.get("deployer")!;
+const _deployer = accounts.get("deployer")!;
 
 describe("Traits Contract", () => {
     it("deploys successfully with all error codes defined", () => {

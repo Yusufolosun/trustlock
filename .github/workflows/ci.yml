@@ -48,6 +48,12 @@ jobs:
       
       - name: Run tests
         run: npm test
+
+      - name: Lint TypeScript tests
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
       
       - name: Upload coverage
         if: success()

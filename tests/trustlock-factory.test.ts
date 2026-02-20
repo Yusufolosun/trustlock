@@ -11,13 +11,13 @@ function createEscrow(
     s: string = seller,
     amount: number = 1000000,
     deadlineBlocks: number = 100,
-    sender: string = deployer
+    sender: string = deployer,
 ): { result: any; id: number } {
     const { result } = simnet.callPublicFn(
         "trustlock-factory",
         "create-escrow",
         [Cl.principal(b), Cl.principal(s), Cl.uint(amount), Cl.uint(deadlineBlocks)],
-        sender
+        sender,
     );
     let id = -1;
     if (result.type === ClarityType.ResponseOk) {
@@ -35,7 +35,7 @@ describe("Factory Contract", () => {
             "trustlock-factory",
             "get-escrow-info",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(info.result).toBeSome(expect.anything());
     });
@@ -48,7 +48,7 @@ describe("Factory Contract", () => {
             "trustlock-factory",
             "get-creator-escrows",
             [Cl.principal(deployer)],
-            deployer
+            deployer,
         );
 
         expect(creatorEscrows.result).toBeTuple({
@@ -65,7 +65,7 @@ describe("Factory Contract", () => {
             "trustlock-factory",
             "get-total-escrows",
             [],
-            deployer
+            deployer,
         );
         expect(totalEscrows.result).toBeOk(Cl.uint(3));
     });
@@ -77,7 +77,7 @@ describe("Factory Contract", () => {
             "trustlock-factory",
             "get-full-escrow-details",
             [Cl.uint(id)],
-            deployer
+            deployer,
         );
         expect(fullDetails.result).toBeOk(expect.anything());
     });
@@ -97,7 +97,7 @@ describe("Factory Contract", () => {
             "trustlock-factory",
             "get-creator-escrows-page",
             [Cl.principal(deployer), Cl.uint(0)],
-            deployer
+            deployer,
         );
         const page0Ids = (page0.result as any).value["escrow-ids"].value;
         expect(page0Ids.length).toBe(PAGE_SIZE);
@@ -107,7 +107,7 @@ describe("Factory Contract", () => {
             "trustlock-factory",
             "get-creator-escrows-page",
             [Cl.principal(deployer), Cl.uint(1)],
-            deployer
+            deployer,
         );
         const page1Ids = (page1.result as any).value["escrow-ids"].value;
         expect(page1Ids.length).toBe(total - PAGE_SIZE);
@@ -117,7 +117,7 @@ describe("Factory Contract", () => {
             "trustlock-factory",
             "get-creator-info",
             [Cl.principal(deployer)],
-            deployer
+            deployer,
         );
         expect(info.result).toBeTuple({
             "total-count": Cl.uint(total),
@@ -137,7 +137,7 @@ describe("Buyer and Seller Lookups", () => {
             "trustlock-factory",
             "get-buyer-escrows",
             [Cl.principal(buyer)],
-            deployer
+            deployer,
         );
         expect(buyerEscrows.result).toBeTuple({
             "escrow-ids": Cl.list([Cl.uint(id1), Cl.uint(id2)]),
@@ -152,7 +152,7 @@ describe("Buyer and Seller Lookups", () => {
             "trustlock-factory",
             "get-seller-escrows",
             [Cl.principal(seller)],
-            deployer
+            deployer,
         );
         expect(sellerEscrows.result).toBeTuple({
             "escrow-ids": Cl.list([Cl.uint(id1), Cl.uint(id2)]),
@@ -168,7 +168,7 @@ describe("Buyer and Seller Lookups", () => {
             "trustlock-factory",
             "get-buyer-info",
             [Cl.principal(buyer)],
-            deployer
+            deployer,
         );
         expect(info.result).toBeTuple({
             "total-count": Cl.uint(3),
@@ -184,7 +184,7 @@ describe("Buyer and Seller Lookups", () => {
             "trustlock-factory",
             "get-seller-info",
             [Cl.principal(seller)],
-            deployer
+            deployer,
         );
         expect(info.result).toBeTuple({
             "total-count": Cl.uint(2),
@@ -198,7 +198,7 @@ describe("Buyer and Seller Lookups", () => {
             "trustlock-factory",
             "get-buyer-escrows",
             [Cl.principal(unknownUser)],
-            deployer
+            deployer,
         );
         expect(result.result).toBeTuple({
             "escrow-ids": Cl.list([]),
@@ -217,7 +217,7 @@ describe("Buyer and Seller Lookups", () => {
             "trustlock-factory",
             "get-buyer-info",
             [Cl.principal(buyer)],
-            deployer
+            deployer,
         );
         expect(buyerInfo.result).toBeTuple({
             "total-count": Cl.uint(1),
@@ -229,7 +229,7 @@ describe("Buyer and Seller Lookups", () => {
             "trustlock-factory",
             "get-seller-info",
             [Cl.principal(seller2)],
-            deployer
+            deployer,
         );
         expect(seller2Info.result).toBeTuple({
             "total-count": Cl.uint(1),
