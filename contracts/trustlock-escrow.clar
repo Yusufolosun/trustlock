@@ -26,8 +26,14 @@
 (define-constant ERR-INVALID-AMOUNT (err u300))
 (define-constant ERR-DEADLINE-PASSED (err u301))
 (define-constant ERR-DEADLINE-NOT-REACHED (err u302))
+(define-constant ERR-AMOUNT-TOO-LOW (err u304))
+(define-constant ERR-DEADLINE-TOO-LONG (err u305))
 ;; Execution errors (u400-u499)
 (define-constant ERR-TRANSFER-FAILED (err u400))
+
+;; Bounds
+(define-constant MIN-ESCROW-AMOUNT u1000)       ;; 0.001 STX minimum
+(define-constant MAX-DEADLINE-BLOCKS u52560)    ;; ~1 year at 10-min blocks
 
 
 ;; ========================================
@@ -94,7 +100,9 @@
 
     ;; Validate inputs
     (asserts! (> amount u0) ERR-INVALID-AMOUNT)
+    (asserts! (>= amount MIN-ESCROW-AMOUNT) ERR-AMOUNT-TOO-LOW)
     (asserts! (> deadline-blocks u0) ERR-DEADLINE-PASSED)
+    (asserts! (<= deadline-blocks MAX-DEADLINE-BLOCKS) ERR-DEADLINE-TOO-LONG)
     (asserts! (not (is-eq buyer seller)) ERR-UNAUTHORIZED)
     
     ;; Create escrow entry
