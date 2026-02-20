@@ -109,6 +109,16 @@
         funded-at: none
       }
     )
+
+    ;; Emit event for off-chain indexers
+    (print {
+      event: "escrow-created",
+      escrow-id: escrow-id,
+      buyer: buyer,
+      seller: seller,
+      amount: amount,
+      deadline: deadline
+    })
     
     (ok escrow-id)
   )
@@ -145,6 +155,15 @@
       })
     )
     
+    ;; Emit event for off-chain indexers
+    (print {
+      event: "escrow-funded",
+      escrow-id: escrow-id,
+      buyer: buyer,
+      amount: amount,
+      funded-at: block-height
+    })
+
     ;; INTERACTIONS: Transfer funds to contract
     (match (stx-transfer? amount tx-sender (as-contract tx-sender))
       success (ok true)
@@ -217,6 +236,14 @@
       (merge escrow-data { status: STATUS-RELEASED })
     )
     
+    ;; Emit event for off-chain indexers
+    (print {
+      event: "escrow-released",
+      escrow-id: escrow-id,
+      seller: seller,
+      amount: amount
+    })
+
     ;; INTERACTIONS: Transfer funds from contract to seller
     (match (as-contract (stx-transfer? amount tx-sender seller))
       success (ok true)
@@ -252,6 +279,14 @@
       (merge escrow-data { status: STATUS-REFUNDED })
     )
     
+    ;; Emit event for off-chain indexers
+    (print {
+      event: "escrow-refunded",
+      escrow-id: escrow-id,
+      buyer: buyer,
+      amount: amount
+    })
+
     ;; INTERACTIONS: Transfer funds from contract to buyer
     (match (as-contract (stx-transfer? amount tx-sender buyer))
       success (ok true)

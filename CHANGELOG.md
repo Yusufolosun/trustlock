@@ -16,7 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `cancel-escrow` function in the escrow contract — buyer can cancel before funding (#4)
 - Factory-level `cancel-escrow` — allows the original creator to cancel through the factory (#4)
 - `STATUS-CANCELLED` terminal state
-- Print event on cancellation for off-chain indexing
+- Print events for all state transitions: `escrow-created`, `escrow-funded`, `escrow-released`, `escrow-refunded`, `escrow-cancelled` (#5)
+- Event emissions documentation (`docs/events.md`) with field schemas and consumption examples (#5)
+- 5 event verification tests validating print event payloads (#5)
 
 ### Changed
 - Replaced all raw `(err uXXX)` with named error constants in escrow and factory contracts (#3)
