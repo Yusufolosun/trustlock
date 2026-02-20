@@ -4,9 +4,14 @@
 
 Contracts must be deployed in dependency order:
 
-1. **trustlock-traits.clar** (no dependencies)
-2. **trustlock-escrow.clar** (depends on traits)
-3. **trustlock-factory.clar** (depends on traits + escrow)
+1. **trustlock-traits.clar** (no dependencies) — error codes & trait interface
+2. **trustlock-escrow.clar** (depends on traits) — core escrow state machine
+3. **trustlock-factory.clar** (depends on traits + escrow) — registry & deployment
+
+> **Important**: If you change the deployment order, the contracts will fail to
+> resolve cross-contract references. The simnet plan in
+> `deployments/default.simnet-plan.yaml` already follows this order. Make sure
+> any new network plans (testnet, mainnet) use the same ordering.
 
 ## Devnet Deployment
 
