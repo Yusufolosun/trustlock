@@ -1,6 +1,9 @@
 ;; TrustLock Escrow
 ;; Core escrow logic for two-party transactions
 
+;; Implement the canonical escrow trait
+(impl-trait .trustlock-traits.escrow-trait)
+
 ;; ========================================
 ;; CONSTANTS
 ;; ========================================
