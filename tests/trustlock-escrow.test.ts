@@ -500,3 +500,238 @@ describe("Emergency Pause", () => {
         expect(status.result).toBeOk(Cl.stringAscii("CREATED"));
     });
 });
+
+// ===== DEPOSIT - ADVANCED (TC-DEP-005, TC-DEP-006) =====
+
+describe("Deposit Advanced", () => {
+    it("rejects deposit after deadline passes (TC-DEP-005)", () => {
+        const deadlineBlocks = 5;
+        const { id } = createEscrow(buyer, seller, 1000000, deadlineBlocks);
+
+        // Advance past deadline
+        simnet.mineEmptyBlocks(deadlineBlocks + 1);
+
+        const { result } = fundEscrow(id);
+        expect(result).toBeErr(Cl.uint(301)); // ERR-DEADLINE-PASSED
+    });
+
+    it("rejects deposit when buyer has insufficient balance (TC-DEP-006)", () => {
+        // Use an extremely large amount that exceeds the buyer's simnet balance
+        const hugeAmount = BigInt("999999999999999999");
+        const { id } = createEscrow(buyer, seller, hugeAmount as any, 100);
+
+        const { result } = fundEscrow(id);
+        expect(result).toBeErr(Cl.uint(400)); // ERR-TRANSFER-FAILED
+    });
+});
+
+// ===== RELEASE - ADVANCED (TC-REL-004) =====
+
+describe("Release Advanced", () => {
+    it("rejects double release (TC-REL-004)", () => {
+        const { id } = createEscrow();
+        fundEscrow(id);
+
+        // First release succeeds
+        const first = simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], seller);
+        expect(first.result).toBeOk(Cl.bool(true));
+
+        // Second release fails - status is no longer FUNDED
+        const second = simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], seller);
+        expect(second.result).toBeErr(Cl.uint(201)); // status check rejects
+    });
+});
+
+// ===== REFUND - ADVANCED (TC-REF-004, TC-REF-005) =====
+
+describe("Refund Advanced", () => {
+    it("rejects double refund (TC-REF-004)", () => {
+        const deadlineBlocks = 5;
+        const { id } = createEscrow(buyer, seller, 1000000, deadlineBlocks);
+        fundEscrow(id);
+        simnet.mineEmptyBlocks(deadlineBlocks + 1);
+
+        // First refund succeeds
+        const first = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
+        expect(first.result).toBeOk(Cl.bool(true));
+
+        // Second refund fails - status is no longer FUNDED
+        const second = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
+        expect(second.result).toBeErr(Cl.uint(201)); // status check rejects
+    });
+
+    it("rejects refund after release (TC-REF-005)", () => {
+        const deadlineBlocks = 5;
+        const { id } = createEscrow(buyer, seller, 1000000, deadlineBlocks);
+        fundEscrow(id);
+
+        // Release first
+        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], seller);
+
+        // Advance past deadline, then try refund
+        simnet.mineEmptyBlocks(deadlineBlocks + 1);
+        const { result } = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
+        expect(result).toBeErr(Cl.uint(201)); // status is RELEASED, not FUNDED
+    });
+});
+
+// ===== STATE TRANSITIONS (TC-STATE-003) =====
+
+describe("State Transitions", () => {
+    it("rejects release on CREATED escrow (TC-STATE-003)", () => {
+        const { id } = createEscrow();
+        // Try to release without depositing first (CREATED -> release)
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "release",
+            [Cl.uint(id)],
+            seller,
+        );
+        expect(result).toBeErr(Cl.uint(201)); // not in FUNDED state
+    });
+
+    it("rejects refund on CREATED escrow", () => {
+        const { id } = createEscrow();
+        simnet.mineEmptyBlocks(200);
+        const { result } = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
+        expect(result).toBeErr(Cl.uint(201)); // not in FUNDED state
+    });
+
+    it("rejects cancel on FUNDED escrow", () => {
+        const { id } = createEscrow();
+        fundEscrow(id);
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "cancel-escrow",
+            [Cl.uint(id)],
+            buyer,
+        );
+        expect(result).toBeErr(Cl.uint(204)); // ERR-INVALID-STATE
+    });
+
+    it("rejects cancel on RELEASED escrow", () => {
+        const { id } = createEscrow();
+        fundEscrow(id);
+        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], seller);
+
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "cancel-escrow",
+            [Cl.uint(id)],
+            buyer,
+        );
+        expect(result).toBeErr(Cl.uint(204)); // ERR-INVALID-STATE
+    });
+
+    it("rejects deposit on RELEASED escrow", () => {
+        const { id } = createEscrow();
+        fundEscrow(id);
+        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], seller);
+
+        const { result } = fundEscrow(id);
+        expect(result).toBeErr(Cl.uint(200)); // ERR-ALREADY-FUNDED
+    });
+});
+
+// ===== GET-INFO STATE READS (TC-INFO-001 to TC-INFO-004) =====
+
+describe("Get-Info State Reads", () => {
+    it("returns correct CREATED state (TC-INFO-001)", () => {
+        const { id } = createEscrow(buyer, seller, 5000000, 50);
+
+        const info = simnet.callReadOnlyFn("trustlock-escrow", "get-info", [Cl.uint(id)], deployer);
+        const data = (info.result as any).value.value;
+        expect(data["buyer"]).toStrictEqual(Cl.principal(buyer));
+        expect(data["seller"]).toStrictEqual(Cl.principal(seller));
+        expect(data["amount"]).toStrictEqual(Cl.uint(5000000));
+        expect(data["status"]).toStrictEqual(Cl.stringAscii("CREATED"));
+        expect(data["funded-at"]).toStrictEqual(Cl.none());
+    });
+
+    it("returns correct FUNDED state with funded-at (TC-INFO-002)", () => {
+        const { id } = createEscrow();
+        fundEscrow(id);
+
+        const info = simnet.callReadOnlyFn("trustlock-escrow", "get-info", [Cl.uint(id)], deployer);
+        const data = (info.result as any).value.value;
+        expect(data["status"]).toStrictEqual(Cl.stringAscii("FUNDED"));
+        // funded-at should be (some <block-height>)
+        expect(data["funded-at"].type).toBe(ClarityType.OptionalSome);
+    });
+
+    it("returns correct RELEASED state (TC-INFO-003)", () => {
+        const { id } = createEscrow();
+        fundEscrow(id);
+        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], seller);
+
+        const info = simnet.callReadOnlyFn("trustlock-escrow", "get-info", [Cl.uint(id)], deployer);
+        const data = (info.result as any).value.value;
+        expect(data["status"]).toStrictEqual(Cl.stringAscii("RELEASED"));
+    });
+
+    it("returns correct REFUNDED state (TC-INFO-004)", () => {
+        const deadlineBlocks = 5;
+        const { id } = createEscrow(buyer, seller, 1000000, deadlineBlocks);
+        fundEscrow(id);
+        simnet.mineEmptyBlocks(deadlineBlocks + 1);
+        simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
+
+        const info = simnet.callReadOnlyFn("trustlock-escrow", "get-info", [Cl.uint(id)], deployer);
+        const data = (info.result as any).value.value;
+        expect(data["status"]).toStrictEqual(Cl.stringAscii("REFUNDED"));
+    });
+});
+
+// ===== SECURITY (TC-SEC-001, TC-SEC-002) =====
+
+describe("Security", () => {
+    it("prevents reentrancy via CEI pattern (TC-SEC-001)", () => {
+        // The escrow contract uses Checks-Effects-Interactions pattern:
+        // 1. Checks: validate preconditions
+        // 2. Effects: update state (status) BEFORE any external call
+        // 3. Interactions: stx-transfer
+        // This means if deposit is called and the state is updated to FUNDED
+        // before the transfer, a reentrant call would see FUNDED and reject.
+        const { id } = createEscrow();
+        fundEscrow(id);
+
+        // After funding, state is FUNDED. A second deposit attempt
+        // (simulating reentrancy) is rejected because status != CREATED.
+        const { result } = fundEscrow(id);
+        expect(result).toBeErr(Cl.uint(200)); // ERR-ALREADY-FUNDED
+
+        // Similarly, after release, a second release fails.
+        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], seller);
+        const reentrant = simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], seller);
+        expect(reentrant.result).toBeErr(Cl.uint(201));
+    });
+
+    it("transaction ordering does not break atomicity (TC-SEC-002)", () => {
+        // Simulate a front-running scenario: two users race to interact
+        // with the same escrow. Each operation is atomic within its block.
+        const { id } = createEscrow();
+        fundEscrow(id);
+
+        // Attacker tries to release (not the seller) - authorization check prevents it
+        const attackerRelease = simnet.callPublicFn(
+            "trustlock-escrow",
+            "release",
+            [Cl.uint(id)],
+            attacker,
+        );
+        expect(attackerRelease.result).toBeErr(Cl.uint(101)); // ERR-NOT-SELLER
+
+        // Legitimate seller release succeeds
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "release",
+            [Cl.uint(id)],
+            seller,
+        );
+        expect(result).toBeOk(Cl.bool(true));
+
+        // Even if attacker retries after, state is already RELEASED
+        const retry = simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], attacker);
+        expect(retry.result).toBeErr(Cl.uint(101));
+    });
+});
