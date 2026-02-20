@@ -6,8 +6,8 @@
 - **Description**: Escrow initialized through the factory contract, awaiting initial funding
 - **Data**: Buyer and seller addresses assigned, amount and deadline set
 - **Entry**: Only the factory contract can transition the system to this state through `initialize-escrow`. Direct calls are rejected with `ERR-NOT-FACTORY (u104)`.
-- **Actions Available**: `deposit()`
-- **Who Can Act**: Buyer only
+- **Actions Available**: `deposit()`, `cancel-escrow()`
+- **Who Can Act**: Buyer (deposit, cancel), Creator via factory (cancel)
 
 ### FUNDED
 - **Description**: Buyer has deposited funds, awaiting seller confirmation or timeout
@@ -27,28 +27,47 @@
 - **Actions Available**: None (terminal)
 - **Who Can Act**: None
 
+### CANCELLED
+- **Description**: Escrow cancelled before funding (terminal state)
+- **Data**: Cancellation event emitted for indexing
+- **Actions Available**: None (terminal)
+- **Who Can Act**: None
+
 ## State Transitions
 
 ```
     ┌─────────┐
     │ CREATED │
-    └────┬────┘
-         │ deposit() [buyer only]
-         │
-    ┌────▼────┐
+    └─┬─────┬─┘
+      │     │
+      │     └─ cancel-escrow() ──────────► ┌───────────┐
+      │        [buyer or creator]           │ CANCELLED │
+      │                                     └───────────┘
+      │ deposit() [buyer only]
+      │
+    ┌─▼──────┐
     │ FUNDED  │
     └─┬─────┬─┘
       │     │
-      │     └─ refund() [after deadline] ──► ┌──────────┐
-      │                                       │ REFUNDED │
-      │                                       └──────────┘
+      └─ release() ───────────────────── ► ┌──────────┐
+      │    [seller only]                    │ RELEASED │
+      │                                     └──────────┘
       │
-      └─ release() [seller only] ────────► ┌──────────┐
-                                            │ RELEASED │
+      └─ refund() [after deadline] ──────► ┌──────────┐
+                                            │ REFUNDED │
                                             └──────────┘
 ```
 
 ## Transition Rules
+
+### CREATED → CANCELLED
+- **Trigger**: `cancel-escrow()` called by buyer (direct) or creator (via factory)
+- **Preconditions**:
+  - Current state must be CREATED
+  - Caller must be buyer (direct) or creator (through factory)
+- **Postconditions**:
+  - State changes to CANCELLED
+  - Print event emitted for indexing
 
 ### CREATED → FUNDED
 - **Trigger**: `deposit()` called by buyer
@@ -95,6 +114,7 @@ Each transition enforces preconditions and returns specific error codes:
 | Release when not funded | `u201` | ERR-NOT-FUNDED |
 | Transition from terminal state | `u202/u203` | ERR-ALREADY-RELEASED/REFUNDED |
 | Invalid amount on deposit | `u303` | ERR-AMOUNT-MISMATCH |
+| Cancel wrong state | `u204` | ERR-INVALID-STATE |
 | Refund before deadline | `u302` | ERR-DEADLINE-NOT-REACHED |
 | Transfer execution failure | `u400` | ERR-TRANSFER-FAILED |
 
@@ -104,4 +124,4 @@ Each transition enforces preconditions and returns specific error codes:
 2. **Deadline Enforcement**: Block height comparison (deterministic)
 3. **Authorization**: Strict role checks on state-changing functions
 4. **Atomicity**: All-or-nothing transfers (no partial states)
-5. **Terminal States**: RELEASED and REFUNDED are irreversible
+5. **Terminal States**: RELEASED, REFUNDED, and CANCELLED are irreversible
