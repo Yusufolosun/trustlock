@@ -61,9 +61,10 @@ clarinet integrate
 - Deposit, release, refund functions
 - Read-only queries
 
-**trustlock-factory.clar** (~200 lines)
+**trustlock-factory.clar** (~250 lines)
 - Deploy escrow instances
 - Registry and tracking
+- Paginated per-creator escrow storage (50 IDs per page, unlimited pages)
 - Batch queries for pagination
 
 ### State Machine

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected deployment order in simnet plan — traits now deploys before escrow and factory (#2)
 - Unignored `deployments/default.simnet-plan.yaml` so the canonical deployment plan is tracked in git
 - Restricted `initialize-escrow` to factory-only calls — direct calls now return `ERR-NOT-FACTORY (u104)` (#1)
+- Replaced `unwrap-panic` in `add-to-creator-list` with paginated storage — creators can now have unlimited escrows (#6)
 
 ### Added
 - `cancel-escrow` function in the escrow contract — buyer can cancel before funding (#4)
@@ -19,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Print events for all state transitions: `escrow-created`, `escrow-funded`, `escrow-released`, `escrow-refunded`, `escrow-cancelled` (#5)
 - Event emissions documentation (`docs/events.md`) with field schemas and consumption examples (#5)
 - 5 event verification tests validating print event payloads (#5)
+- Paginated creator-escrow storage with `get-creator-escrows-page` and `get-creator-info` read-only functions (#6)
+- Pagination overflow test (52 escrows across 2 pages) (#6)
 
 ### Changed
 - Replaced all raw `(err uXXX)` with named error constants in escrow and factory contracts (#3)

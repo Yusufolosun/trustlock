@@ -81,4 +81,47 @@ describe("Factory Contract", () => {
         );
         expect(fullDetails.result).toBeOk(expect.anything());
     });
+
+    it("paginates creator escrows beyond page size", () => {
+        // PAGE-SIZE is 50 in the contract. Create 52 escrows to trigger page overflow.
+        const PAGE_SIZE = 50;
+        const total = PAGE_SIZE + 2;
+
+        for (let i = 0; i < total; i++) {
+            const { result } = createEscrow(buyer, seller, 1000000 + i, 100);
+            expect(result).toBeOk(expect.anything());
+        }
+
+        // Page 0 should contain exactly PAGE_SIZE entries
+        const page0 = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-creator-escrows-page",
+            [Cl.principal(deployer), Cl.uint(0)],
+            deployer
+        );
+        const page0Ids = (page0.result as any).value["escrow-ids"].value;
+        expect(page0Ids.length).toBe(PAGE_SIZE);
+
+        // Page 1 should contain the overflow entries (2)
+        const page1 = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-creator-escrows-page",
+            [Cl.principal(deployer), Cl.uint(1)],
+            deployer
+        );
+        const page1Ids = (page1.result as any).value["escrow-ids"].value;
+        expect(page1Ids.length).toBe(total - PAGE_SIZE);
+
+        // Creator info should reflect correct totals
+        const info = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-creator-info",
+            [Cl.principal(deployer)],
+            deployer
+        );
+        expect(info.result).toBeTuple({
+            "total-count": Cl.uint(total),
+            "current-page": Cl.uint(1),
+        });
+    });
 });
