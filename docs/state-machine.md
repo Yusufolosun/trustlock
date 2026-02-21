@@ -17,13 +17,13 @@
 
 ### RELEASED
 - **Description**: Funds successfully transferred to seller (terminal state)
-- **Data**: Release timestamp recorded
+- **Data**: Release timestamp recorded in `released-at` field
 - **Actions Available**: None (terminal)
 - **Who Can Act**: None
 
 ### REFUNDED
 - **Description**: Funds returned to buyer (terminal state)
-- **Data**: Refund timestamp recorded
+- **Data**: Refund timestamp recorded in `refunded-at` field
 - **Actions Available**: None (terminal)
 - **Who Can Act**: None
 
