@@ -95,10 +95,19 @@ npm test -- --coverage
 
 ## Test Statistics
 
-- **Total Test Cases**: 24+
-- **Target Coverage**: 95%+
-- **Test Files**: 5
-- **Categories**: 8
+| File | Tests | Focus |
+|------|------:|-------|
+| `trustlock-traits.test.ts` | 30 | Error codes, trait interface |
+| `trustlock-escrow.test.ts` | 51 | Core escrow functions, events, pause, security |
+| `trustlock-factory.test.ts` | 11 | Factory creation, lookups, pagination |
+| `trustlock-integration.test.ts` | 3 | End-to-end flows |
+| `trustlock-edge-cases.test.ts` | 9 | Boundary values, empty states |
+| `trustlock-stress.test.ts` | 17 | Bulk creation, concurrent ops, scaling |
+| **Total** | **121** | |
+
+- **Pass Rate**: 100%
+- **Test Files**: 6
+- **Categories**: 12+
 
 ## Writing New Tests
 
