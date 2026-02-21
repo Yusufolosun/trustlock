@@ -41,7 +41,7 @@ npm test
 Expected output:
 ```
 ✔ 3 contracts checked
-✓ 26 tests passed (26)
+✓ 121 tests passed (121)
 ```
 
 ## 2. Understand the Architecture
