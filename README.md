@@ -135,6 +135,9 @@ See [Security Policy](SECURITY.md) for details.
 # Install dependencies
 npm install
 
+# Set up environment variables
+cp .env.example .env
+
 # Check contracts
 clarinet check
 
