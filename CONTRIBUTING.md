@@ -24,6 +24,10 @@ cd trustlock
 # Install dependencies
 npm install
 
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your network and deployer address
+
 # Install pre-commit hooks
 pip install pre-commit
 pre-commit install
