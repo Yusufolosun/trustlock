@@ -1,22 +1,48 @@
 import { describe, expect, it } from "vitest";
+import { Cl, ClarityType } from "@stacks/transactions";
 
 const accounts = simnet.getAccounts();
-const _deployer = accounts.get("deployer")!;
+const deployer = accounts.get("deployer")!;
+const buyer = accounts.get("wallet_1")!;
+const seller = accounts.get("wallet_2")!;
+const attacker = accounts.get("wallet_3")!;
 
-describe("Traits Contract", () => {
-    it("deploys successfully with all error codes defined", () => {
-        // The traits contract should be deployed by simnet automatically.
-        // If error codes had syntax issues, deployment would fail.
+/**
+ * Helper — create an escrow through the factory so we can exercise
+ * error codes that only fire during real contract interactions.
+ */
+function createEscrow(
+    b: string = buyer,
+    s: string = seller,
+    amount: number | bigint = 1000000,
+    deadlineBlocks: number = 100,
+    sender: string = deployer,
+): { result: any; id: number } {
+    const { result } = simnet.callPublicFn(
+        "trustlock-factory",
+        "create-escrow",
+        [Cl.principal(b), Cl.principal(s), Cl.uint(amount), Cl.uint(deadlineBlocks)],
+        sender,
+    );
+    let id = -1;
+    if (result.type === ClarityType.ResponseOk) {
+        id = Number(result.value.value);
+    }
+    return { result, id };
+}
+
+// ===== DEPLOYMENT =====
+
+describe("Traits Contract Deployment", () => {
+    it("deploys to simnet without compilation errors", () => {
+        // If any constant or trait definition had a syntax issue the
+        // entire simnet boot would fail — blockHeight > 0 proves it loaded.
         expect(simnet.blockHeight).toBeGreaterThan(0);
     });
 
-    it("error codes follow expected ranges", () => {
-        // Error code ranges are validated by contract compilation:
-        // 100-199: Authorization
-        // 200-299: State
-        // 300-399: Validation
-        // 400-499: Execution
-        // This test confirms the contract deployed without issues.
-        expect(simnet.blockHeight).toBeDefined();
+    it("is recognized as a deployed contract by simnet", () => {
+        const source = simnet.getContractSource("trustlock-traits");
+        expect(source).toBeDefined();
+        expect(source!.length).toBeGreaterThan(0);
     });
 });
