@@ -275,4 +275,15 @@ describe("Error Code Range Integrity", () => {
             expect(code).toBeLessThan(500);
         }
     });
+
+    it("no duplicate error codes exist across all ranges", () => {
+        const allCodes = [...authCodes, ...stateCodes, ...validationCodes, ...execCodes];
+        const unique = new Set(allCodes);
+        expect(unique.size).toBe(allCodes.length);
+    });
+
+    it("total error constant count matches the contract (21 codes)", () => {
+        const allCodes = [...authCodes, ...stateCodes, ...validationCodes, ...execCodes];
+        expect(allCodes.length).toBe(21);
+    });
 });
