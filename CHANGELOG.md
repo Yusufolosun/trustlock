@@ -8,12 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Fixed nonce desync between factory and escrow — factory is now the single source of truth for escrow IDs; `initialize-escrow` accepts `escrow-id` as first parameter with overwrite guard (#36, PR #56)
+- Disambiguated error code u201 — `ERR-NOT-FUNDED` (u201) is now strictly for state checks; added `ERR-ESCROW-NOT-FOUND` (u205) for existence checks (#26, PR #57)
 - Corrected deployment order in simnet plan — traits now deploys before escrow and factory (#2)
 - Unignored `deployments/default.simnet-plan.yaml` so the canonical deployment plan is tracked in git
 - Restricted `initialize-escrow` to factory-only calls — direct calls now return `ERR-NOT-FACTORY (u104)` (#1)
 - Replaced `unwrap-panic` in `add-to-creator-list` with paginated storage — creators can now have unlimited escrows (#6)
 
 ### Added
+- `released-at` and `refunded-at` timestamps to escrow data map — set on release/refund, included in print events (#25, PR #58)
+- Testnet and mainnet deployment plans (`deployments/default.testnet-plan.yaml`, `deployments/default.mainnet-plan.yaml`) with batched deploy order (#21, PR #59)
+- `settings/Testnet.toml.example` and `settings/Mainnet.toml.example` safe configuration templates (#21, PR #59)
+- `scripts/pre-deploy-check.sh` automated pre-deployment validation script (#21, PR #59)
+- MIT LICENSE file and `"license": "MIT"` field in package.json (#19, PR #60)
 - 16 remaining test cases from spec: deposit advanced, release advanced, refund advanced, state transitions, get-info state reads, and security tests — 75 total (#15)
 - Buyer and seller lookup maps to factory contract with paginated storage (#9)
 - `get-buyer-escrows`, `get-seller-escrows`, `get-buyer-escrows-page`, `get-seller-escrows-page` read-only functions (#9)
