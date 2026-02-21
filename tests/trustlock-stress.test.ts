@@ -35,3 +35,37 @@ function createEscrow(
 function fundEscrow(escrowId: number, b: string = buyer) {
     return simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(escrowId)], b);
 }
+
+// ===== BULK CREATION =====
+
+describe("Bulk Escrow Creation", () => {
+    it("creates 30 escrows with sequential IDs", () => {
+        const count = 30;
+        const ids: number[] = [];
+
+        for (let i = 0; i < count; i++) {
+            const { result, id } = createEscrow(buyer, seller, 1000000 + i, 100);
+            expect(result).toBeOk(Cl.uint(id));
+            ids.push(id);
+        }
+
+        for (let i = 0; i < count; i++) {
+            expect(ids[i]).toBe(i);
+        }
+    });
+
+    it("factory counter stays accurate after 30 creations", () => {
+        const count = 30;
+        for (let i = 0; i < count; i++) {
+            createEscrow(buyer, seller, 1000000, 100);
+        }
+
+        const total = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-total-escrows",
+            [],
+            deployer,
+        );
+        expect(total.result).toBeOk(Cl.uint(count));
+    });
+});
