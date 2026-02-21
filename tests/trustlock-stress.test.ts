@@ -226,3 +226,46 @@ describe("Interleaved Operations", () => {
         expect(statusB.result).toBeOk(Cl.stringAscii("CREATED"));
     });
 });
+
+// ===== CONCURRENT LIFECYCLE =====
+
+describe("Concurrent Lifecycle", () => {
+    it("completes 5 full release cycles back-to-back", () => {
+        for (let i = 0; i < 5; i++) {
+            const amount = 1000000 * (i + 1);
+            const { id } = createEscrow(buyer, seller, amount, 100);
+            fundEscrow(id);
+
+            const rel = simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], seller);
+            expect(rel.result).toBeOk(Cl.bool(true));
+
+            const status = simnet.callReadOnlyFn(
+                "trustlock-escrow",
+                "get-status",
+                [Cl.uint(id)],
+                deployer,
+            );
+            expect(status.result).toBeOk(Cl.stringAscii("RELEASED"));
+        }
+    });
+
+    it("completes 5 full refund cycles back-to-back", () => {
+        for (let i = 0; i < 5; i++) {
+            const deadline = 3;
+            const { id } = createEscrow(buyer, seller, 1000000 * (i + 1), deadline);
+            fundEscrow(id);
+            simnet.mineEmptyBlocks(deadline + 1);
+
+            const ref = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id)], buyer);
+            expect(ref.result).toBeOk(Cl.bool(true));
+
+            const status = simnet.callReadOnlyFn(
+                "trustlock-escrow",
+                "get-status",
+                [Cl.uint(id)],
+                deployer,
+            );
+            expect(status.result).toBeOk(Cl.stringAscii("REFUNDED"));
+        }
+    });
+});
