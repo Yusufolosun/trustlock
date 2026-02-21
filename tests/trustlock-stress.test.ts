@@ -400,3 +400,59 @@ describe("Multi-Creator Stress", () => {
         });
     });
 });
+
+// ===== RAPID STATE TRANSITIONS =====
+
+describe("Rapid State Transitions", () => {
+    it("handles 10 escrows each going through full lifecycle rapidly", () => {
+        const count = 10;
+        const ids: number[] = [];
+
+        // Create all
+        for (let i = 0; i < count; i++) {
+            const { id } = createEscrow(buyer, seller, 1000000 + i, 100);
+            ids.push(id);
+        }
+
+        // Fund all
+        for (const id of ids) {
+            fundEscrow(id);
+        }
+
+        // Release all
+        for (const id of ids) {
+            const rel = simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], seller);
+            expect(rel.result).toBeOk(Cl.bool(true));
+        }
+
+        // Verify all RELEASED
+        for (const id of ids) {
+            const status = simnet.callReadOnlyFn(
+                "trustlock-escrow",
+                "get-status",
+                [Cl.uint(id)],
+                deployer,
+            );
+            expect(status.result).toBeOk(Cl.stringAscii("RELEASED"));
+        }
+    });
+
+    it("rejected operations never change state", () => {
+        const { id } = createEscrow();
+        const attacker = accounts.get("wallet_5")!;
+
+        // Attacker tries to deposit, release, cancel — all should fail
+        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id)], attacker);
+        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], attacker);
+        simnet.callPublicFn("trustlock-escrow", "cancel-escrow", [Cl.uint(id)], attacker);
+
+        // State should still be CREATED
+        const status = simnet.callReadOnlyFn(
+            "trustlock-escrow",
+            "get-status",
+            [Cl.uint(id)],
+            deployer,
+        );
+        expect(status.result).toBeOk(Cl.stringAscii("CREATED"));
+    });
+});
