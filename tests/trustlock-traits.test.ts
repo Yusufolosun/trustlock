@@ -103,3 +103,30 @@ describe("Authorization Error Codes", () => {
         expect(result).toBeErr(Cl.uint(105));
     });
 });
+
+// ===== STATE ERROR CODES (u200–u299) =====
+
+describe("State Error Codes", () => {
+    it("ERR-ALREADY-FUNDED (u200) rejects double deposit", () => {
+        const { id } = createEscrow();
+        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id)], buyer);
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "deposit",
+            [Cl.uint(id)],
+            buyer,
+        );
+        expect(result).toBeErr(Cl.uint(200));
+    });
+
+    it("ERR-NOT-FUNDED (u201) rejects release on unfunded escrow", () => {
+        const { id } = createEscrow();
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "release",
+            [Cl.uint(id)],
+            seller,
+        );
+        expect(result).toBeErr(Cl.uint(201));
+    });
+});
