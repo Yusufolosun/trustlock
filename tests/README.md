@@ -155,22 +155,17 @@ Key patterns:
 
 ## Coverage Goals
 
-| Contract          | Functions          | Target Coverage |
-| ----------------- | ------------------ | --------------- |
-| trustlock-traits  | 0 (constants only) | N/A             |
-| trustlock-escrow  | 9                  | 95%+            |
-| trustlock-factory | 11                 | 95%+            |
+| Contract | Functions | Tests | Target Coverage |
+|-----------|-----------|-------|-----------------|
+| trustlock-traits | 0 (constants + trait) | 30 | N/A |
+| trustlock-escrow | 9 | 51 | 95%+ |
+| trustlock-factory | 11 | 11 | 95%+ |
 
 ## CI Integration
 
-Tests run automatically on:
-
-- Every commit to feature branches
-- Pull requests to main
-- Pre-deployment checks
+Tests run automatically on every push and PR via GitHub Actions:
 
 ```yaml
-# Example GitHub Actions
-- name: Run Clarinet tests
-  run: clarinet test --coverage
+- name: Run tests
+  run: npm test
 ```
