@@ -19,6 +19,7 @@
 (define-constant ERR-ALREADY-RELEASED (err u202))
 (define-constant ERR-ALREADY-REFUNDED (err u203))
 (define-constant ERR-INVALID-STATE (err u204))
+(define-constant ERR-ESCROW-NOT-FOUND (err u205))
 (define-constant ERR-CONTRACT-PAUSED (err u206))
 
 ;; Validation Errors (u300-u399)

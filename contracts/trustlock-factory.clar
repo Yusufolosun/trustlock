@@ -17,7 +17,7 @@
 ;; Error codes (mirrored from trustlock-traits for local use)
 (define-constant ERR-UNAUTHORIZED (err u103))
 (define-constant ERR-NOT-OWNER (err u105))
-(define-constant ERR-NOT-FOUND (err u201))
+(define-constant ERR-ESCROW-NOT-FOUND (err u205))
 (define-constant ERR-CONTRACT-PAUSED (err u206))
 (define-constant ERR-INVALID-AMOUNT (err u300))
 (define-constant ERR-DEADLINE-PASSED (err u301))
@@ -271,7 +271,7 @@
 ;; @returns (ok true) on success, error code on failure
 (define-public (cancel-escrow (escrow-id uint))
   (let (
-    (registry-data (unwrap! (get-escrow-info escrow-id) ERR-NOT-FOUND))
+    (registry-data (unwrap! (get-escrow-info escrow-id) ERR-ESCROW-NOT-FOUND))
     (creator (get creator registry-data))
   )
     ;; Pause check
@@ -382,7 +382,7 @@
           })
         error (err error)
       )
-    ERR-NOT-FOUND
+    ERR-ESCROW-NOT-FOUND
   )
 )
 
