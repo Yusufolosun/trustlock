@@ -115,3 +115,54 @@ describe("Bulk Escrow Creation", () => {
         }
     });
 });
+
+// ===== INTERLEAVED OPERATIONS =====
+
+describe("Interleaved Operations", () => {
+    it("handles create-deposit-release interleaved across four escrows", () => {
+        const { id: a } = createEscrow(buyer, seller, 1000000, 100);
+        const { id: b } = createEscrow(buyer, seller, 2000000, 100);
+
+        fundEscrow(a);
+
+        const { id: c } = createEscrow(buyer, seller, 3000000, 100);
+
+        fundEscrow(b);
+
+        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(a)], seller);
+
+        fundEscrow(c);
+
+        const { id: d } = createEscrow(buyer, seller, 4000000, 100);
+
+        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(b)], seller);
+
+        const statusA = simnet.callReadOnlyFn("trustlock-escrow", "get-status", [Cl.uint(a)], deployer);
+        expect(statusA.result).toBeOk(Cl.stringAscii("RELEASED"));
+
+        const statusB = simnet.callReadOnlyFn("trustlock-escrow", "get-status", [Cl.uint(b)], deployer);
+        expect(statusB.result).toBeOk(Cl.stringAscii("RELEASED"));
+
+        const statusC = simnet.callReadOnlyFn("trustlock-escrow", "get-status", [Cl.uint(c)], deployer);
+        expect(statusC.result).toBeOk(Cl.stringAscii("FUNDED"));
+
+        const statusD = simnet.callReadOnlyFn("trustlock-escrow", "get-status", [Cl.uint(d)], deployer);
+        expect(statusD.result).toBeOk(Cl.stringAscii("CREATED"));
+    });
+
+    it("handles mixed operations across different wallet pairs", () => {
+        const { id: e1 } = createEscrow(buyer, seller, 1000000, 100);
+        const { id: e2 } = createEscrow(buyer2, seller2, 2000000, 100);
+
+        fundEscrow(e1, buyer);
+        fundEscrow(e2, buyer2);
+
+        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(e2)], seller2);
+
+        const s1 = simnet.callReadOnlyFn("trustlock-escrow", "get-status", [Cl.uint(e1)], deployer);
+        expect(s1.result).toBeOk(Cl.stringAscii("FUNDED"));
+
+        const s2 = simnet.callReadOnlyFn("trustlock-escrow", "get-status", [Cl.uint(e2)], deployer);
+        expect(s2.result).toBeOk(Cl.stringAscii("RELEASED"));
+    });
+});
