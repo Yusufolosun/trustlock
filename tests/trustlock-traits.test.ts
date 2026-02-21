@@ -72,4 +72,34 @@ describe("Authorization Error Codes", () => {
         );
         expect(result).toBeErr(Cl.uint(101));
     });
+
+    it("ERR-UNAUTHORIZED (u103) rejects escrow with same buyer and seller", () => {
+        const { result } = simnet.callPublicFn(
+            "trustlock-factory",
+            "create-escrow",
+            [Cl.principal(buyer), Cl.principal(buyer), Cl.uint(1000000), Cl.uint(100)],
+            deployer,
+        );
+        expect(result).toBeErr(Cl.uint(103));
+    });
+
+    it("ERR-NOT-FACTORY (u104) rejects direct initialize-escrow call", () => {
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "initialize-escrow",
+            [Cl.uint(0), Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(100)],
+            deployer,
+        );
+        expect(result).toBeErr(Cl.uint(104));
+    });
+
+    it("ERR-NOT-OWNER (u105) rejects pause from non-deployer", () => {
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "pause",
+            [],
+            attacker,
+        );
+        expect(result).toBeErr(Cl.uint(105));
+    });
 });
