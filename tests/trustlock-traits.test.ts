@@ -190,4 +190,36 @@ describe("Validation Error Codes", () => {
         );
         expect(result).toBeErr(Cl.uint(301));
     });
+
+    it("ERR-DEADLINE-NOT-REACHED (u302) rejects premature refund", () => {
+        const { id } = createEscrow(buyer, seller, 1000000, 100);
+        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id)], buyer);
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "refund",
+            [Cl.uint(id)],
+            buyer,
+        );
+        expect(result).toBeErr(Cl.uint(302));
+    });
+
+    it("ERR-AMOUNT-TOO-LOW (u304) rejects amount below MIN-ESCROW-AMOUNT", () => {
+        const { result } = simnet.callPublicFn(
+            "trustlock-factory",
+            "create-escrow",
+            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(500), Cl.uint(100)],
+            deployer,
+        );
+        expect(result).toBeErr(Cl.uint(304));
+    });
+
+    it("ERR-DEADLINE-TOO-LONG (u305) rejects deadline above MAX-DEADLINE-BLOCKS", () => {
+        const { result } = simnet.callPublicFn(
+            "trustlock-factory",
+            "create-escrow",
+            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(99999)],
+            deployer,
+        );
+        expect(result).toBeErr(Cl.uint(305));
+    });
 });
