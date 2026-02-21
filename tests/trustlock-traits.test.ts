@@ -46,3 +46,30 @@ describe("Traits Contract Deployment", () => {
         expect(source!.length).toBeGreaterThan(0);
     });
 });
+
+// ===== AUTHORIZATION ERROR CODES (u100–u199) =====
+
+describe("Authorization Error Codes", () => {
+    it("ERR-NOT-BUYER (u100) rejects deposit from wrong wallet", () => {
+        const { id } = createEscrow();
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "deposit",
+            [Cl.uint(id)],
+            attacker,
+        );
+        expect(result).toBeErr(Cl.uint(100));
+    });
+
+    it("ERR-NOT-SELLER (u101) rejects release from wrong wallet", () => {
+        const { id } = createEscrow();
+        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id)], buyer);
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "release",
+            [Cl.uint(id)],
+            attacker,
+        );
+        expect(result).toBeErr(Cl.uint(101));
+    });
+});
