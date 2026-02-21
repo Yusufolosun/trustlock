@@ -254,8 +254,8 @@
     (add-to-buyer-list buyer escrow-id)
     (add-to-seller-list seller escrow-id)
     
-    ;; Initialize escrow in the escrow contract
-    (try! (contract-call? .trustlock-escrow initialize-escrow buyer seller amount deadline-blocks))
+    ;; Initialize escrow in the escrow contract (factory owns the ID)
+    (try! (contract-call? .trustlock-escrow initialize-escrow escrow-id buyer seller amount deadline-blocks))
     
     (ok escrow-id)
   )

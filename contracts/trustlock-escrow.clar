@@ -62,23 +62,11 @@
   }
 )
 
-;; Escrow counter for unique IDs
-(define-data-var escrow-nonce uint u0)
+;; Total number of escrows initialized in this contract
+(define-data-var escrow-count uint u0)
 
 ;; Emergency pause flag
 (define-data-var is-paused bool false)
-
-;; ========================================
-;; PRIVATE HELPER FUNCTIONS
-;; ========================================
-
-;; Get next escrow ID and increment nonce
-(define-private (get-next-escrow-id)
-  (let ((current-id (var-get escrow-nonce)))
-    (var-set escrow-nonce (+ current-id u1))
-    current-id
-  )
-)
 
 ;; Get escrow data by ID
 (define-read-only (get-escrow (escrow-id uint))
@@ -90,18 +78,20 @@
 ;; ========================================
 
 ;; Initialize a new escrow
+;; The escrow-id is assigned by the factory (single source of truth).
+;; @param escrow-id: ID assigned by the factory contract
 ;; @param buyer: Principal address of the buyer
 ;; @param seller: Principal address of the seller
 ;; @param amount: Amount of STX to escrow (in micro-STX)
-;; @param deadline: Block height after which refund is allowed
+;; @param deadline-blocks: Number of blocks until refund is allowed
 ;; @returns escrow-id on success, error code on failure
-(define-public (initialize-escrow 
+(define-public (initialize-escrow
+  (escrow-id uint)
   (buyer principal)
   (seller principal)
   (amount uint)
   (deadline-blocks uint))
   (let (
-    (escrow-id (get-next-escrow-id))
     (deadline (+ block-height deadline-blocks))
   )
     ;; Pause check
@@ -111,6 +101,9 @@
     ;; Direct calls have tx-sender == contract-caller; inter-contract
     ;; calls set contract-caller to the calling contract.
     (asserts! (not (is-eq tx-sender contract-caller)) ERR-NOT-FACTORY)
+
+    ;; Prevent overwriting an existing escrow
+    (asserts! (is-none (get-escrow escrow-id)) ERR-ALREADY-FUNDED)
 
     ;; Validate inputs
     (asserts! (> amount u0) ERR-INVALID-AMOUNT)
@@ -131,6 +124,9 @@
         funded-at: none
       }
     )
+
+    ;; Track total escrows initialized
+    (var-set escrow-count (+ (var-get escrow-count) u1))
 
     ;; Emit event for off-chain indexers
     (print {
@@ -359,10 +355,11 @@
   )
 )
 
-;; Get total number of escrows created
-;; @returns Current escrow nonce
+;; Get total number of escrows initialized
+;; Note: The factory contract is the canonical source for escrow IDs.
+;; This counter tracks how many escrows exist in this contract.
 (define-read-only (get-escrow-count)
-  (ok (var-get escrow-nonce))
+  (ok (var-get escrow-count))
 )
 
 ;; Check if contract is paused
