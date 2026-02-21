@@ -11,6 +11,7 @@ settings/Devnet.toml
 # May contain API keys, wallet seeds, deployment secrets
 .env
 .env.*
+!.env.example
 .env.local
 .env.production
 .env.development
