@@ -59,7 +59,9 @@
     amount: uint,
     deadline: uint,
     status: (string-ascii 10),
-    funded-at: (optional uint)
+    funded-at: (optional uint),
+    released-at: (optional uint),
+    refunded-at: (optional uint)
   }
 )
 
@@ -122,7 +124,9 @@
         amount: amount,
         deadline: deadline,
         status: STATUS-CREATED,
-        funded-at: none
+        funded-at: none,
+        released-at: none,
+        refunded-at: none
       }
     )
 
@@ -255,7 +259,7 @@
     ;; EFFECTS: Update state before external call
     (map-set escrows
       { escrow-id: escrow-id }
-      (merge escrow-data { status: STATUS-RELEASED })
+      (merge escrow-data { status: STATUS-RELEASED, released-at: (some block-height) })
     )
     
     ;; Emit event for off-chain indexers
@@ -263,7 +267,8 @@
       event: "escrow-released",
       escrow-id: escrow-id,
       seller: seller,
-      amount: amount
+      amount: amount,
+      released-at: block-height
     })
 
     ;; INTERACTIONS: Transfer funds from contract to seller
@@ -299,7 +304,7 @@
     ;; EFFECTS: Update state before external call
     (map-set escrows
       { escrow-id: escrow-id }
-      (merge escrow-data { status: STATUS-REFUNDED })
+      (merge escrow-data { status: STATUS-REFUNDED, refunded-at: (some block-height) })
     )
     
     ;; Emit event for off-chain indexers
@@ -307,7 +312,8 @@
       event: "escrow-refunded",
       escrow-id: escrow-id,
       buyer: buyer,
-      amount: amount
+      amount: amount,
+      refunded-at: block-height
     })
 
     ;; INTERACTIONS: Transfer funds from contract to buyer

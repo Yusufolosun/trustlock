@@ -646,6 +646,8 @@ describe("Get-Info State Reads", () => {
         expect(data["amount"]).toStrictEqual(Cl.uint(5000000));
         expect(data["status"]).toStrictEqual(Cl.stringAscii("CREATED"));
         expect(data["funded-at"]).toStrictEqual(Cl.none());
+        expect(data["released-at"]).toStrictEqual(Cl.none());
+        expect(data["refunded-at"]).toStrictEqual(Cl.none());
     });
 
     it("returns correct FUNDED state with funded-at (TC-INFO-002)", () => {
@@ -667,6 +669,8 @@ describe("Get-Info State Reads", () => {
         const info = simnet.callReadOnlyFn("trustlock-escrow", "get-info", [Cl.uint(id)], deployer);
         const data = (info.result as any).value.value;
         expect(data["status"]).toStrictEqual(Cl.stringAscii("RELEASED"));
+        expect(data["released-at"].type).toBe(ClarityType.OptionalSome);
+        expect(data["refunded-at"]).toStrictEqual(Cl.none());
     });
 
     it("returns correct REFUNDED state (TC-INFO-004)", () => {
@@ -679,6 +683,8 @@ describe("Get-Info State Reads", () => {
         const info = simnet.callReadOnlyFn("trustlock-escrow", "get-info", [Cl.uint(id)], deployer);
         const data = (info.result as any).value.value;
         expect(data["status"]).toStrictEqual(Cl.stringAscii("REFUNDED"));
+        expect(data["refunded-at"].type).toBe(ClarityType.OptionalSome);
+        expect(data["released-at"]).toStrictEqual(Cl.none());
     });
 });
 
