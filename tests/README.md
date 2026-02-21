@@ -2,19 +2,31 @@
 
 ## Overview
 
-Comprehensive test suite with 24+ test cases covering all contract functionality.
+Comprehensive test suite with **121 tests** across 6 files covering all contract functionality,
+error codes, stress scenarios, and edge cases.
+
+## Framework
+
+- **Test Runner**: [Vitest](https://vitest.dev/) v4
+- **Blockchain Simulator**: [@hirosystems/clarinet-sdk](https://github.com/hirosystems/clarinet) v3
+- **Clarity Helpers**: `@stacks/transactions` (Cl, ClarityType)
+
+> Tests run against a fresh simnet instance per test — state does not carry over between `it()` blocks.
 
 ## Running Tests
 
 ```bash
 # Run all tests
-clarinet test
+npm test
 
-# Run specific test file
-clarinet test --file tests/trustlock-escrow_test.ts
+# Run a specific test file
+npm test -- tests/trustlock-escrow.test.ts
+
+# Run with verbose output
+npx vitest run --reporter=verbose
 
 # Run with coverage
-clarinet test --coverage
+npm test -- --coverage
 ```
 
 ## Test Categories
