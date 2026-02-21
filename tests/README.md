@@ -111,29 +111,47 @@ npm test -- --coverage
 
 ## Writing New Tests
 
-Follow this pattern:
+Tests use **Vitest** with **@hirosystems/clarinet-sdk v3**. The `simnet` global
+is injected automatically — no manual chain setup needed.
 
 ```typescript
-Clarinet.test({
-    name: "Category: Description",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        // Setup
-        const account = accounts.get('wallet_1')!;
+import { describe, expect, it } from "vitest";
+import { Cl, ClarityType } from "@stacks/transactions";
 
-        // Execute
-        let block = chain.mineBlock([
-            Tx.contractCall(...)
-        ]);
+const accounts = simnet.getAccounts();
+const deployer = accounts.get("deployer")!;
+const buyer = accounts.get("wallet_1")!;
+const seller = accounts.get("wallet_2")!;
 
-        // Assert
-        block.receipts[0].result.expectOk();
+describe("My Feature", () => {
+    it("creates an escrow and verifies its status", () => {
+        // Call a public function
+        const { result } = simnet.callPublicFn(
+            "trustlock-factory",
+            "create-escrow",
+            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(100)],
+            deployer,
+        );
+        expect(result).toBeOk(expect.anything());
 
-        // Verify state
-        let status = chain.callReadOnlyFn(...);
-        assertEquals(status.result, expected);
-    },
+        // Call a read-only function
+        const status = simnet.callReadOnlyFn(
+            "trustlock-escrow",
+            "get-status",
+            [Cl.uint(0)],
+            deployer,
+        );
+        expect(status.result).toBeOk(Cl.stringAscii("CREATED"));
+    });
 });
 ```
+
+Key patterns:
+- `simnet.callPublicFn(contract, function, args, sender)` — mutating calls
+- `simnet.callReadOnlyFn(contract, function, args, caller)` — read-only queries
+- `simnet.mineEmptyBlocks(n)` — advance block height for deadline testing
+- `Cl.uint()`, `Cl.principal()`, `Cl.stringAscii()` — Clarity value constructors
+- `expect(result).toBeOk(...)` / `expect(result).toBeErr(...)` — Clarity response matchers
 
 ## Coverage Goals
 
