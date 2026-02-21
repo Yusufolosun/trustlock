@@ -310,4 +310,30 @@ describe("Escrow Trait Interface", () => {
         const source = simnet.getContractSource("trustlock-traits");
         expect(source).toContain("(refund (uint) (response bool uint))");
     });
+
+    it("escrow contract implements all three trait methods end-to-end", () => {
+        // deposit
+        const { id: id1 } = createEscrow();
+        const dep = simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id1)], buyer);
+        expect(dep.result).toBeOk(Cl.bool(true));
+
+        // release
+        const rel = simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id1)], seller);
+        expect(rel.result).toBeOk(Cl.bool(true));
+
+        // refund (requires separate funded escrow with passed deadline)
+        const { id: id2 } = createEscrow(buyer, seller, 1000000, 5);
+        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id2)], buyer);
+        simnet.mineEmptyBlocks(6);
+        const ref = simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(id2)], buyer);
+        expect(ref.result).toBeOk(Cl.bool(true));
+    });
+
+    it("trait source contains all four error constant categories", () => {
+        const source = simnet.getContractSource("trustlock-traits");
+        expect(source).toContain("ERR-NOT-BUYER");
+        expect(source).toContain("ERR-ALREADY-FUNDED");
+        expect(source).toContain("ERR-INVALID-AMOUNT");
+        expect(source).toContain("ERR-TRANSFER-FAILED");
+    });
 });
