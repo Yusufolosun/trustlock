@@ -52,7 +52,7 @@ describe("Escrow Initialization", () => {
         const { result } = simnet.callPublicFn(
             "trustlock-escrow",
             "initialize-escrow",
-            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(100)],
+            [Cl.uint(0), Cl.principal(buyer), Cl.principal(seller), Cl.uint(1000000), Cl.uint(100)],
             deployer,
         );
         expect(result).toBeErr(Cl.uint(104));
@@ -733,5 +733,52 @@ describe("Security", () => {
         // Even if attacker retries after, state is already RELEASED
         const retry = simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(id)], attacker);
         expect(retry.result).toBeErr(Cl.uint(101));
+    });
+});
+
+// ===== ID SYNC (Issue #36) =====
+
+describe("Factory-Escrow ID Sync", () => {
+    it("keeps factory and escrow IDs in sync through 12 creations", () => {
+        for (let i = 0; i < 12; i++) {
+            const { result, id } = createEscrow(buyer, seller, 1000000 + i, 100);
+            expect(result).toBeOk(Cl.uint(id));
+            expect(id).toBe(i);
+
+            // Verify escrow contract has this ID with correct data
+            const info = simnet.callReadOnlyFn(
+                "trustlock-escrow",
+                "get-info",
+                [Cl.uint(id)],
+                deployer,
+            );
+            expect(info.result).toBeOk(expect.anything());
+
+            // Verify factory registry also has this ID
+            const regInfo = simnet.callReadOnlyFn(
+                "trustlock-factory",
+                "get-escrow-info",
+                [Cl.uint(id)],
+                deployer,
+            );
+            expect(regInfo.result).toBeSome(expect.anything());
+        }
+
+        // Both counters should agree
+        const factoryTotal = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-total-escrows",
+            [],
+            deployer,
+        );
+        expect(factoryTotal.result).toBeOk(Cl.uint(12));
+
+        const escrowCount = simnet.callReadOnlyFn(
+            "trustlock-escrow",
+            "get-escrow-count",
+            [],
+            deployer,
+        );
+        expect(escrowCount.result).toBeOk(Cl.uint(12));
     });
 });
