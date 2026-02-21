@@ -182,7 +182,7 @@ We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 ### Phase 1: Foundation ✅ (v0.1.0-alpha)
 - [x] Core escrow contract
 - [x] Factory contract
-- [x] Test suite (26 tests)
+- [x] Test suite (121 tests)
 - [x] Documentation
 - [x] CI/CD infrastructure
 
