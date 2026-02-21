@@ -287,3 +287,27 @@ describe("Error Code Range Integrity", () => {
         expect(allCodes.length).toBe(21);
     });
 });
+
+// ===== ESCROW TRAIT INTERFACE =====
+
+describe("Escrow Trait Interface", () => {
+    it("trait contract source contains define-trait escrow-trait", () => {
+        const source = simnet.getContractSource("trustlock-traits");
+        expect(source).toContain("define-trait escrow-trait");
+    });
+
+    it("trait defines the deposit function signature", () => {
+        const source = simnet.getContractSource("trustlock-traits");
+        expect(source).toContain("(deposit (uint) (response bool uint))");
+    });
+
+    it("trait defines the release function signature", () => {
+        const source = simnet.getContractSource("trustlock-traits");
+        expect(source).toContain("(release (uint) (response bool uint))");
+    });
+
+    it("trait defines the refund function signature", () => {
+        const source = simnet.getContractSource("trustlock-traits");
+        expect(source).toContain("(refund (uint) (response bool uint))");
+    });
+});
