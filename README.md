@@ -26,7 +26,7 @@ TrustLock enables trustless escrow agreements between two parties without interm
 - 🏭 **Factory Pattern**: Deploy unlimited escrow instances
 - 🔐 **Secure**: CEI pattern, authorization checks, state machine
 - ⛽ **Gas Efficient**: Optimized for low transaction costs
-- 🧪 **Well Tested**: 26 tests, 100% pass rate
+- 🧪 **Well Tested**: 121 tests, 100% pass rate
 - 📚 **Documented**: Comprehensive docs and guides
 
 ## Quick Start
@@ -147,15 +147,14 @@ npm test -- --coverage
 
 ### Testing
 
-**Test Suite**: 26 tests across 5 files
+**Test Suite**: 121 tests across 6 files
 
-- ✅ Initialization tests
-- ✅ Deposit function tests
-- ✅ Release function tests
-- ✅ Refund function tests
-- ✅ Factory tests
-- ✅ Integration tests
-- ✅ Edge case tests
+- ✅ Trait compliance and error codes (30)
+- ✅ Core escrow functions and events (51)
+- ✅ Factory creation, lookups, pagination (11)
+- ✅ End-to-end integration flows (3)
+- ✅ Boundary values and edge cases (9)
+- ✅ Stress and concurrency (17)
 
 See [Test Documentation](tests/README.md) for details.
 
@@ -183,7 +182,7 @@ We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 ### Phase 1: Foundation ✅ (v0.1.0-alpha)
 - [x] Core escrow contract
 - [x] Factory contract
-- [x] Test suite (26 tests)
+- [x] Test suite (121 tests)
 - [x] Documentation
 - [x] CI/CD infrastructure
 
