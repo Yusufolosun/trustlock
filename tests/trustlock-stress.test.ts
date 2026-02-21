@@ -339,3 +339,64 @@ describe("Creator List Scaling", () => {
         });
     });
 });
+
+// ===== MULTI-CREATOR STRESS =====
+
+describe("Multi-Creator Stress", () => {
+    it("multiple creators can create escrows without conflict", () => {
+        const creators = [deployer, buyer, seller];
+        const ids: number[] = [];
+
+        for (const creator of creators) {
+            for (let i = 0; i < 5; i++) {
+                const { result, id } = createEscrow(buyer2, seller2, 1000000, 100, creator);
+                expect(result).toBeOk(Cl.uint(id));
+                ids.push(id);
+            }
+        }
+
+        // 15 total escrows across 3 creators
+        expect(ids.length).toBe(15);
+
+        const total = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-total-escrows",
+            [],
+            deployer,
+        );
+        expect(total.result).toBeOk(Cl.uint(15));
+    });
+
+    it("creator lists stay isolated between different principals", () => {
+        // deployer creates 3
+        for (let i = 0; i < 3; i++) {
+            createEscrow(buyer, seller, 1000000, 100, deployer);
+        }
+        // buyer creates 2
+        for (let i = 0; i < 2; i++) {
+            createEscrow(buyer2, seller2, 1000000, 100, buyer);
+        }
+
+        const deployerInfo = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-creator-info",
+            [Cl.principal(deployer)],
+            deployer,
+        );
+        expect(deployerInfo.result).toBeTuple({
+            "total-count": Cl.uint(3),
+            "current-page": Cl.uint(0),
+        });
+
+        const buyerInfo = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-creator-info",
+            [Cl.principal(buyer)],
+            deployer,
+        );
+        expect(buyerInfo.result).toBeTuple({
+            "total-count": Cl.uint(2),
+            "current-page": Cl.uint(0),
+        });
+    });
+});
