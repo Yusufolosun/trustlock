@@ -33,6 +33,10 @@ cd trustlock
 # Install dependencies
 npm install
 
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your values (see comments in the file)
+
 # Verify setup
 clarinet check
 npm test
