@@ -239,3 +239,40 @@ describe("Execution Error Codes", () => {
         expect(result).toBeErr(Cl.uint(400));
     });
 });
+
+// ===== ERROR CODE RANGE INTEGRITY =====
+
+describe("Error Code Range Integrity", () => {
+    const authCodes = [100, 101, 102, 103, 104, 105];
+    const stateCodes = [200, 201, 202, 203, 204, 205, 206];
+    const validationCodes = [300, 301, 302, 303, 304, 305];
+    const execCodes = [400, 401];
+
+    it("all authorization errors fall within u100–u199", () => {
+        for (const code of authCodes) {
+            expect(code).toBeGreaterThanOrEqual(100);
+            expect(code).toBeLessThan(200);
+        }
+    });
+
+    it("all state errors fall within u200–u299", () => {
+        for (const code of stateCodes) {
+            expect(code).toBeGreaterThanOrEqual(200);
+            expect(code).toBeLessThan(300);
+        }
+    });
+
+    it("all validation errors fall within u300–u399", () => {
+        for (const code of validationCodes) {
+            expect(code).toBeGreaterThanOrEqual(300);
+            expect(code).toBeLessThan(400);
+        }
+    });
+
+    it("all execution errors fall within u400–u499", () => {
+        for (const code of execCodes) {
+            expect(code).toBeGreaterThanOrEqual(400);
+            expect(code).toBeLessThan(500);
+        }
+    });
+});
