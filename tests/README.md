@@ -31,38 +31,67 @@ npm test -- --coverage
 
 ## Test Categories
 
-### Traits Tests (`trustlock-traits_test.ts`)
+### Traits Tests (`trustlock-traits.test.ts`) — 30 tests
 
-- Error code definitions
-- Constant uniqueness
+- Deployment verification (2 tests)
+- Authorization error codes: u100–u105 (5 tests)
+- State error codes: u200–u206 (5 tests)
+- Validation error codes: u300–u305 (4 tests)
+- Execution error codes: u400 (1 test)
+- Error range integrity and uniqueness (6 tests)
+- Escrow trait interface and compliance (6 tests)
+- End-to-end trait method verification (1 test)
 
-### Escrow Tests (`trustlock-escrow_test.ts`)
+### Escrow Tests (`trustlock-escrow.test.ts`) — 51 tests
 
-- Initialization (3 tests)
-- Deposit (3 tests)
+- Initialization (5 tests)
+- Deposit (4 tests)
 - Release (3 tests)
 - Refund (3 tests)
+- Cancellation (6 tests)
+- Event emissions (5 tests)
+- Emergency pause (8 tests)
+- Deposit advanced (2 tests)
+- Release advanced (1 test)
+- Refund advanced (2 tests)
+- State transitions (5 tests)
+- Get-info state reads (4 tests)
+- Security: CEI and atomicity (2 tests)
+- Factory-escrow ID sync (1 test)
 
-### Factory Tests (`trustlock-factory_test.ts`)
+### Factory Tests (`trustlock-factory.test.ts`) — 11 tests
 
 - Escrow creation (1 test)
 - Creator tracking (1 test)
 - Counter functionality (1 test)
 - Full details query (1 test)
+- Pagination (1 test)
+- Buyer/seller lookups (6 tests)
 
-### Integration Tests (`trustlock-integration_test.ts`)
+### Integration Tests (`trustlock-integration.test.ts`) — 3 tests
 
-- Full successful flow (1 test)
-- Full refund flow (1 test)
-- Multiple concurrent escrows (1 test)
+- Full successful flow via factory (1 test)
+- Full refund flow via factory (1 test)
+- Multiple concurrent escrows with state isolation (1 test)
 
-### Edge Cases (`trustlock-edge-cases_test.ts`)
+### Edge Case Tests (`trustlock-edge-cases.test.ts`) — 9 tests
 
 - Non-existent escrow queries (1 test)
 - Large amounts (1 test)
 - Minimum deadlines (1 test)
-- Refundable checks (1 test)
+- Refundable status checks (1 test)
 - Empty lists (1 test)
+- Amount and deadline boundary validation (4 tests)
+
+### Stress Tests (`trustlock-stress.test.ts`) — 17 tests
+
+- Bulk creation: 30 sequential escrows (2 tests)
+- Independent state verification (2 tests)
+- Interleaved operations (4 tests)
+- Concurrent lifecycle: release and refund cycles (3 tests)
+- Creator list scaling (2 tests)
+- Multi-creator stress and isolation (2 tests)
+- Rapid state transitions (2 tests)
 
 ## Test Statistics
 
