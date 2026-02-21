@@ -26,7 +26,7 @@ TrustLock enables trustless escrow agreements between two parties without interm
 - 🏭 **Factory Pattern**: Deploy unlimited escrow instances
 - 🔐 **Secure**: CEI pattern, authorization checks, state machine
 - ⛽ **Gas Efficient**: Optimized for low transaction costs
-- 🧪 **Well Tested**: 26 tests, 100% pass rate
+- 🧪 **Well Tested**: 121 tests, 100% pass rate
 - 📚 **Documented**: Comprehensive docs and guides
 
 ## Quick Start
