@@ -129,4 +129,39 @@ describe("State Error Codes", () => {
         );
         expect(result).toBeErr(Cl.uint(201));
     });
+
+    it("ERR-INVALID-STATE (u204) rejects cancel on funded escrow", () => {
+        const { id } = createEscrow();
+        simnet.callPublicFn("trustlock-escrow", "deposit", [Cl.uint(id)], buyer);
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "cancel-escrow",
+            [Cl.uint(id)],
+            buyer,
+        );
+        expect(result).toBeErr(Cl.uint(204));
+    });
+
+    it("ERR-ESCROW-NOT-FOUND (u205) rejects query for non-existent escrow", () => {
+        const info = simnet.callReadOnlyFn(
+            "trustlock-escrow",
+            "get-info",
+            [Cl.uint(999)],
+            deployer,
+        );
+        expect(info.result).toBeErr(Cl.uint(205));
+    });
+
+    it("ERR-CONTRACT-PAUSED (u206) blocks operations when paused", () => {
+        const { id } = createEscrow();
+        simnet.callPublicFn("trustlock-escrow", "pause", [], deployer);
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "deposit",
+            [Cl.uint(id)],
+            buyer,
+        );
+        expect(result).toBeErr(Cl.uint(206));
+        simnet.callPublicFn("trustlock-escrow", "unpause", [], deployer);
+    });
 });
