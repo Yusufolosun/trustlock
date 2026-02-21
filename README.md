@@ -147,15 +147,14 @@ npm test -- --coverage
 
 ### Testing
 
-**Test Suite**: 26 tests across 5 files
+**Test Suite**: 121 tests across 6 files
 
-- ✅ Initialization tests
-- ✅ Deposit function tests
-- ✅ Release function tests
-- ✅ Refund function tests
-- ✅ Factory tests
-- ✅ Integration tests
-- ✅ Edge case tests
+- ✅ Trait compliance and error codes (30)
+- ✅ Core escrow functions and events (51)
+- ✅ Factory creation, lookups, pagination (11)
+- ✅ End-to-end integration flows (3)
+- ✅ Boundary values and edge cases (9)
+- ✅ Stress and concurrency (17)
 
 See [Test Documentation](tests/README.md) for details.
 
