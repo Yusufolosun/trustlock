@@ -1,0 +1,50 @@
+---
+# TrustLock Testnet Deployment Plan
+# Deploy order: traits → escrow → factory (dependency chain)
+#
+# Prerequisites:
+#   1. Create settings/Testnet.toml from settings/Testnet.toml.example
+#   2. Fund deployer address with testnet STX (faucet: https://explorer.hiro.so/sandbox/faucet?chain=testnet)
+#   3. Run: clarinet deployments apply -p deployments/default.testnet-plan.yaml
+#
+# After deployment update docs/deployment-guide.md with deployed addresses.
+
+id: 0
+name: Testnet deployment for TrustLock escrow contracts
+network: testnet
+stacks-node: "https://api.testnet.hiro.so"
+
+plan:
+  batches:
+    # Batch 0: Deploy trait definitions (no dependencies)
+    - id: 0
+      transactions:
+        - transaction-type: contract-publish
+          contract-name: trustlock-traits
+          expected-sender: $DEPLOYER
+          path: contracts/trustlock-traits.clar
+          clarity-version: 2
+          cost: 10000
+      epoch: "2.4"
+
+    # Batch 1: Deploy escrow contract (depends on traits)
+    - id: 1
+      transactions:
+        - transaction-type: contract-publish
+          contract-name: trustlock-escrow
+          expected-sender: $DEPLOYER
+          path: contracts/trustlock-escrow.clar
+          clarity-version: 2
+          cost: 25000
+      epoch: "2.4"
+
+    # Batch 2: Deploy factory contract (depends on traits + escrow)
+    - id: 2
+      transactions:
+        - transaction-type: contract-publish
+          contract-name: trustlock-factory
+          expected-sender: $DEPLOYER
+          path: contracts/trustlock-factory.clar
+          clarity-version: 2
+          cost: 20000
+      epoch: "2.4"

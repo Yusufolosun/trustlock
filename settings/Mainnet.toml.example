@@ -1,0 +1,23 @@
+# ============================================================
+# TrustLock — Mainnet Settings Template
+# ============================================================
+# INSTRUCTIONS:
+#   1. Copy this file to settings/Mainnet.toml
+#   2. Replace YOUR_MAINNET_MNEMONIC with your actual mnemonic
+#   3. NEVER commit settings/Mainnet.toml (it is in .gitignore)
+#
+# SECURITY WARNINGS:
+#   - Use a dedicated deployer wallet, NOT your personal wallet
+#   - Consider using a hardware wallet via stacks-cli
+#   - Fund with only enough STX for deployment (~1 STX)
+#   - Revoke access after deployment if possible
+# ============================================================
+
+[network]
+name = "mainnet"
+node_rpc_address = "https://api.mainnet.hiro.so"
+deployment_fee_rate = 10
+
+[accounts.deployer]
+mnemonic = "YOUR_MAINNET_MNEMONIC_HERE_DO_NOT_USE_DEVNET_KEYS"
+# stx_address = "SP..."  # Fill in after generating from mnemonic
