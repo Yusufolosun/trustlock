@@ -34,7 +34,7 @@ describe("Edge Cases", () => {
             [Cl.uint(999)],
             deployer,
         );
-        expect(result.result).toBeErr(Cl.uint(201));
+        expect(result.result).toBeErr(Cl.uint(205)); // ERR-ESCROW-NOT-FOUND
     });
 
     it("accepts very large amount for escrow creation", () => {

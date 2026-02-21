@@ -11,10 +11,11 @@
 | `u104` | ERR-NOT-FACTORY | Authorization | Caller is not the factory contract |
 | `u105` | ERR-NOT-OWNER | Authorization | Caller is not the contract owner |
 | `u200` | ERR-ALREADY-FUNDED | State | Escrow has already been funded |
-| `u201` | ERR-NOT-FUNDED | State | Escrow has not been funded yet |
+| `u201` | ERR-NOT-FUNDED | State | Escrow exists but has not been funded yet |
 | `u202` | ERR-ALREADY-RELEASED | State | Funds have already been released |
 | `u203` | ERR-ALREADY-REFUNDED | State | Funds have already been refunded |
 | `u204` | ERR-INVALID-STATE | State | Current state doesn't allow this action |
+| `u205` | ERR-ESCROW-NOT-FOUND | State | Escrow does not exist for the given ID |
 | `u206` | ERR-CONTRACT-PAUSED | State | Contract is paused by owner |
 | `u300` | ERR-INVALID-AMOUNT | Validation | Amount is invalid or out of range |
 | `u301` | ERR-DEADLINE-PASSED | Validation | Deadline has already passed |
@@ -107,6 +108,7 @@ const handleError = (errorCode: number): string => {
     201: "This escrow needs to be funded first",
     202: "Funds have already been released to the seller",
     203: "Funds have already been refunded to the buyer",
+    205: "No escrow found with that ID",
     301: "The deadline for this escrow has passed",
     302: "Cannot refund until the deadline is reached",
     303: "The amount provided doesn't match the escrow amount",

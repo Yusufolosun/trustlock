@@ -132,7 +132,7 @@ describe("Escrow Deposit", () => {
             [Cl.uint(999)],
             buyer,
         );
-        expect(result).toBeErr(Cl.uint(201));
+        expect(result).toBeErr(Cl.uint(205)); // ERR-ESCROW-NOT-FOUND
     });
 });
 

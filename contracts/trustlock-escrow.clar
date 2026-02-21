@@ -27,7 +27,8 @@
 (define-constant ERR-NOT-OWNER (err u105))
 ;; State errors (u200-u299)
 (define-constant ERR-ALREADY-FUNDED (err u200))
-(define-constant ERR-NOT-FOUND (err u201))
+(define-constant ERR-NOT-FUNDED (err u201))
+(define-constant ERR-ESCROW-NOT-FOUND (err u205))
 (define-constant ERR-INVALID-STATE (err u204))
 (define-constant ERR-CONTRACT-PAUSED (err u206))
 ;; Validation errors (u300-u399)
@@ -153,7 +154,7 @@
 (define-public (deposit (escrow-id uint))
   (let (
     ;; Retrieve escrow data
-    (escrow-data (unwrap! (get-escrow escrow-id) ERR-NOT-FOUND))
+    (escrow-data (unwrap! (get-escrow escrow-id) ERR-ESCROW-NOT-FOUND))
     (buyer (get buyer escrow-data))
     (amount (get amount escrow-data))
     (deadline (get deadline escrow-data))
@@ -201,7 +202,7 @@
 ;; @returns (ok true) on success, error code on failure
 (define-public (cancel-escrow (escrow-id uint))
   (let (
-    (escrow-data (unwrap! (get-escrow escrow-id) ERR-NOT-FOUND))
+    (escrow-data (unwrap! (get-escrow escrow-id) ERR-ESCROW-NOT-FOUND))
     (buyer (get buyer escrow-data))
     (status (get status escrow-data))
     (is-inter-contract (not (is-eq tx-sender contract-caller)))
@@ -241,7 +242,7 @@
 (define-public (release (escrow-id uint))
   (let (
     ;; Retrieve escrow data
-    (escrow-data (unwrap! (get-escrow escrow-id) ERR-NOT-FOUND))
+    (escrow-data (unwrap! (get-escrow escrow-id) ERR-ESCROW-NOT-FOUND))
     (seller (get seller escrow-data))
     (amount (get amount escrow-data))
     (status (get status escrow-data))
@@ -249,7 +250,7 @@
     ;; CHECKS: Verify preconditions
     (asserts! (not (var-get is-paused)) ERR-CONTRACT-PAUSED)
     (asserts! (is-eq tx-sender seller) ERR-NOT-SELLER)
-    (asserts! (is-eq status STATUS-FUNDED) ERR-NOT-FOUND)
+    (asserts! (is-eq status STATUS-FUNDED) ERR-NOT-FUNDED)
     
     ;; EFFECTS: Update state before external call
     (map-set escrows
@@ -284,7 +285,7 @@
 (define-public (refund (escrow-id uint))
   (let (
     ;; Retrieve escrow data
-    (escrow-data (unwrap! (get-escrow escrow-id) ERR-NOT-FOUND))
+    (escrow-data (unwrap! (get-escrow escrow-id) ERR-ESCROW-NOT-FOUND))
     (buyer (get buyer escrow-data))
     (amount (get amount escrow-data))
     (deadline (get deadline escrow-data))
@@ -292,7 +293,7 @@
   )
     ;; CHECKS: Verify preconditions
     (asserts! (not (var-get is-paused)) ERR-CONTRACT-PAUSED)
-    (asserts! (is-eq status STATUS-FUNDED) ERR-NOT-FOUND)
+    (asserts! (is-eq status STATUS-FUNDED) ERR-NOT-FUNDED)
     (asserts! (>= block-height deadline) ERR-DEADLINE-NOT-REACHED)
     
     ;; EFFECTS: Update state before external call
@@ -327,7 +328,7 @@
 (define-read-only (get-info (escrow-id uint))
   (match (get-escrow escrow-id)
     escrow-data (ok escrow-data)
-    ERR-NOT-FOUND
+    ERR-ESCROW-NOT-FOUND
   )
 )
 
@@ -337,7 +338,7 @@
 (define-read-only (get-status (escrow-id uint))
   (match (get-escrow escrow-id)
     escrow-data (ok (get status escrow-data))
-    ERR-NOT-FOUND
+    ERR-ESCROW-NOT-FOUND
   )
 )
 
