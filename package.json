@@ -4,6 +4,7 @@
   "description": "Unit tests for TrustLock smart contracts",
   "type": "module",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "test": "vitest run",
     "test:report": "vitest run --coverage",
