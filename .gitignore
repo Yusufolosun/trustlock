@@ -28,8 +28,6 @@ wallets/
 costs-reports.json
 deployments/*
 !deployments/default.simnet-plan.yaml
-!deployments/default.testnet-plan.yaml
-!deployments/default.mainnet-plan.yaml
 .requirements/
 
 # Node.js Dependencies
