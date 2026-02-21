@@ -223,3 +223,19 @@ describe("Validation Error Codes", () => {
         expect(result).toBeErr(Cl.uint(305));
     });
 });
+
+// ===== EXECUTION ERROR CODES (u400–u499) =====
+
+describe("Execution Error Codes", () => {
+    it("ERR-TRANSFER-FAILED (u400) rejects deposit when buyer lacks funds", () => {
+        const hugeAmount = BigInt("999999999999999999");
+        const { id } = createEscrow(buyer, seller, hugeAmount, 100);
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "deposit",
+            [Cl.uint(id)],
+            buyer,
+        );
+        expect(result).toBeErr(Cl.uint(400));
+    });
+});
