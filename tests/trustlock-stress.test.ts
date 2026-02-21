@@ -268,4 +268,25 @@ describe("Concurrent Lifecycle", () => {
             expect(status.result).toBeOk(Cl.stringAscii("REFUNDED"));
         }
     });
+
+    it("mixes release and refund across different wallet pairs", () => {
+        // Pair 1: buyer/seller → release
+        const { id: e1 } = createEscrow(buyer, seller, 1000000, 100);
+        fundEscrow(e1, buyer);
+
+        // Pair 2: buyer2/seller2 → refund
+        const { id: e2 } = createEscrow(buyer2, seller2, 2000000, 3);
+        fundEscrow(e2, buyer2);
+
+        simnet.callPublicFn("trustlock-escrow", "release", [Cl.uint(e1)], seller);
+
+        simnet.mineEmptyBlocks(5);
+        simnet.callPublicFn("trustlock-escrow", "refund", [Cl.uint(e2)], buyer2);
+
+        const s1 = simnet.callReadOnlyFn("trustlock-escrow", "get-status", [Cl.uint(e1)], deployer);
+        expect(s1.result).toBeOk(Cl.stringAscii("RELEASED"));
+
+        const s2 = simnet.callReadOnlyFn("trustlock-escrow", "get-status", [Cl.uint(e2)], deployer);
+        expect(s2.result).toBeOk(Cl.stringAscii("REFUNDED"));
+    });
 });
