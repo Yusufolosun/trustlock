@@ -290,3 +290,52 @@ describe("Concurrent Lifecycle", () => {
         expect(s2.result).toBeOk(Cl.stringAscii("REFUNDED"));
     });
 });
+
+// ===== CREATOR LIST SCALING =====
+
+describe("Creator List Scaling", () => {
+    it("tracks creator list accurately through 20 escrows", () => {
+        for (let i = 0; i < 20; i++) {
+            createEscrow(buyer, seller, 1000000, 100);
+        }
+
+        const creatorInfo = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-creator-info",
+            [Cl.principal(deployer)],
+            deployer,
+        );
+        expect(creatorInfo.result).toBeTuple({
+            "total-count": Cl.uint(20),
+            "current-page": Cl.uint(0),
+        });
+    });
+
+    it("buyer and seller lists scale independently", () => {
+        for (let i = 0; i < 15; i++) {
+            createEscrow(buyer, seller, 1000000, 100);
+        }
+
+        const buyerInfo = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-buyer-info",
+            [Cl.principal(buyer)],
+            deployer,
+        );
+        expect(buyerInfo.result).toBeTuple({
+            "total-count": Cl.uint(15),
+            "current-page": Cl.uint(0),
+        });
+
+        const sellerInfo = simnet.callReadOnlyFn(
+            "trustlock-factory",
+            "get-seller-info",
+            [Cl.principal(seller)],
+            deployer,
+        );
+        expect(sellerInfo.result).toBeTuple({
+            "total-count": Cl.uint(15),
+            "current-page": Cl.uint(0),
+        });
+    });
+});
