@@ -26,32 +26,41 @@ clarinet deployments apply -p deployments/default.devnet-plan.yaml
 ## Testnet Deployment
 
 ### Prerequisites
-- Stacks wallet with testnet STX (get from faucet)
-- Clarinet CLI installed
+- Stacks wallet with testnet STX (get from [faucet](https://explorer.hiro.so/sandbox/faucet?chain=testnet))
+- Clarinet CLI installed (`clarinet --version`)
 
 ### Steps
 
-1. **Configure Testnet Settings**
-
-Create `settings/Testnet.toml` (do NOT commit):
-
-```toml
-[network]
-name = "testnet"
-node_rpc_address = "https://api.testnet.hiro.so"
-
-[accounts.deployer]
-mnemonic = "YOUR_TESTNET_WALLET_MNEMONIC"
-```
-
-2. **Deploy Contracts**
+1. **Create Testnet Settings**
 
 ```bash
-# Deploy to testnet
-clarinet deployments apply -p deployments/default.testnet-plan.yaml --network testnet
+cp settings/Testnet.toml.example settings/Testnet.toml
+# Edit settings/Testnet.toml — replace YOUR_TESTNET_MNEMONIC with your actual mnemonic
 ```
 
-3. **Verify Deployment**
+2. **Run Pre-Deployment Checks**
+
+```bash
+bash scripts/pre-deploy-check.sh testnet
+```
+
+Expected output:
+```
+  [PASS] Clarinet check passes
+  [PASS] All tests pass
+  [PASS] Testnet plan exists
+  [PASS] Testnet.toml exists
+  ...
+  STATUS: READY for testnet deployment
+```
+
+3. **Deploy Contracts**
+
+```bash
+clarinet deployments apply -p deployments/default.testnet-plan.yaml
+```
+
+4. **Verify Deployment**
 
 Check deployed contracts on testnet explorer:
 - https://explorer.hiro.so/txid/TXID?chain=testnet
@@ -59,34 +68,24 @@ Check deployed contracts on testnet explorer:
 ## Mainnet Deployment
 
 ### Prerequisites
-- Production wallet with mainnet STX
+- Production wallet with mainnet STX (>= 1 STX)
 - Security audit completed
-- Frontend integration tested on testnet
-- Gas costs calculated and approved
+- Testnet deployment fully tested
+- Emergency pause mechanism verified on testnet
 
 ### Pre-Deployment Checklist
 
-- [ ] All tests passing (100% coverage)
-- [ ] Security audit report reviewed
-- [ ] Gas optimization verified
-- [ ] Frontend integration tested on testnet
-- [ ] Deployment wallet funded (estimate: 0.5-1 STX for 3 contracts)
-- [ ] Backup of deployment keys secured
-- [ ] Emergency pause mechanism tested (if applicable)
+```bash
+bash scripts/pre-deploy-check.sh mainnet
+```
 
 ### Steps
 
-1. **Configure Mainnet Settings**
+1. **Create Mainnet Settings**
 
-Create `settings/Mainnet.toml` (do NOT commit):
-
-```toml
-[network]
-name = "mainnet"
-node_rpc_address = "https://api.mainnet.hiro.so"
-
-[accounts.deployer]
-mnemonic = "YOUR_MAINNET_WALLET_MNEMONIC"
+```bash
+cp settings/Mainnet.toml.example settings/Mainnet.toml
+# Edit settings/Mainnet.toml — use a dedicated deployer wallet, NOT personal
 ```
 
 2. **Final Pre-Flight Checks**

@@ -1,0 +1,20 @@
+# ============================================================
+# TrustLock — Testnet Settings Template
+# ============================================================
+# INSTRUCTIONS:
+#   1. Copy this file to settings/Testnet.toml
+#   2. Replace YOUR_TESTNET_MNEMONIC with your actual mnemonic
+#   3. NEVER commit settings/Testnet.toml (it is in .gitignore)
+#
+# Get testnet STX from the faucet:
+#   https://explorer.hiro.so/sandbox/faucet?chain=testnet
+# ============================================================
+
+[network]
+name = "testnet"
+node_rpc_address = "https://api.testnet.hiro.so"
+deployment_fee_rate = 10
+
+[accounts.deployer]
+mnemonic = "YOUR_TESTNET_MNEMONIC_HERE_DO_NOT_USE_DEVNET_KEYS"
+# stx_address = "ST..."  # Fill in after generating from mnemonic

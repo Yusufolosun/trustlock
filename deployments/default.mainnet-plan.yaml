@@ -1,0 +1,54 @@
+---
+# TrustLock Mainnet Deployment Plan
+# Deploy order: traits → escrow → factory (dependency chain)
+#
+# CRITICAL CHECKLIST before running this plan:
+#   [ ] All tests passing: npm test
+#   [ ] Clarinet check passes: clarinet check
+#   [ ] Security audit completed and reviewed
+#   [ ] Testnet deployment verified and tested
+#   [ ] Deployer wallet funded with >= 1 STX (contracts + fees)
+#   [ ] Emergency pause mechanism tested on testnet
+#   [ ] Deployment keys backed up securely
+#
+# Run: clarinet deployments apply -p deployments/default.mainnet-plan.yaml
+
+id: 0
+name: Mainnet deployment for TrustLock escrow contracts
+network: mainnet
+stacks-node: "https://api.mainnet.hiro.so"
+
+plan:
+  batches:
+    # Batch 0: Deploy trait definitions (no dependencies)
+    - id: 0
+      transactions:
+        - transaction-type: contract-publish
+          contract-name: trustlock-traits
+          expected-sender: $DEPLOYER
+          path: contracts/trustlock-traits.clar
+          clarity-version: 2
+          cost: 10000
+      epoch: "2.4"
+
+    # Batch 1: Deploy escrow contract (depends on traits)
+    - id: 1
+      transactions:
+        - transaction-type: contract-publish
+          contract-name: trustlock-escrow
+          expected-sender: $DEPLOYER
+          path: contracts/trustlock-escrow.clar
+          clarity-version: 2
+          cost: 25000
+      epoch: "2.4"
+
+    # Batch 2: Deploy factory contract (depends on traits + escrow)
+    - id: 2
+      transactions:
+        - transaction-type: contract-publish
+          contract-name: trustlock-factory
+          expected-sender: $DEPLOYER
+          path: contracts/trustlock-factory.clar
+          clarity-version: 2
+          cost: 20000
+      epoch: "2.4"
