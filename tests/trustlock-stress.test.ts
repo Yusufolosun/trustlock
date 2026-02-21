@@ -68,4 +68,50 @@ describe("Bulk Escrow Creation", () => {
         );
         expect(total.result).toBeOk(Cl.uint(count));
     });
+
+    it("each escrow holds independent state after bulk creation", () => {
+        const count = 10;
+        const amounts = [1000000, 2000000, 3000000, 5000000, 8000000];
+        const ids: number[] = [];
+
+        for (let i = 0; i < count; i++) {
+            const { id } = createEscrow(buyer, seller, amounts[i % amounts.length], 50 + i * 10);
+            ids.push(id);
+        }
+
+        for (let i = 0; i < count; i++) {
+            const info = simnet.callReadOnlyFn(
+                "trustlock-escrow",
+                "get-info",
+                [Cl.uint(ids[i])],
+                deployer,
+            );
+            const data = (info.result as any).value.value;
+            expect(data["status"]).toStrictEqual(Cl.stringAscii("CREATED"));
+            expect(data["amount"]).toStrictEqual(Cl.uint(amounts[i % amounts.length]));
+        }
+    });
+
+    it("verifies each of 25 escrows in both factory and escrow contracts", () => {
+        const count = 25;
+        for (let i = 0; i < count; i++) {
+            const { id } = createEscrow(buyer, seller, 1000000 + i * 1000, 100);
+
+            const factoryInfo = simnet.callReadOnlyFn(
+                "trustlock-factory",
+                "get-escrow-info",
+                [Cl.uint(id)],
+                deployer,
+            );
+            expect(factoryInfo.result).toBeSome(expect.anything());
+
+            const escrowInfo = simnet.callReadOnlyFn(
+                "trustlock-escrow",
+                "get-info",
+                [Cl.uint(id)],
+                deployer,
+            );
+            expect(escrowInfo.result).toBeOk(expect.anything());
+        }
+    });
 });
