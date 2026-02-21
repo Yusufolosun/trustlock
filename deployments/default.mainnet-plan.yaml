@@ -20,35 +20,28 @@ stacks-node: "https://api.mainnet.hiro.so"
 
 plan:
   batches:
-    # Batch 0: Deploy trait definitions (no dependencies)
+    # Batch 0: Deploy all contracts (traits → escrow → factory dependency chain)
     - id: 0
       transactions:
-        - transaction-type: contract-publish
-          contract-name: trustlock-traits
-          expected-sender: $DEPLOYER
-          path: contracts/trustlock-traits.clar
-          clarity-version: 2
-          cost: 10000
-      epoch: "2.4"
-
-    # Batch 1: Deploy escrow contract (depends on traits)
-    - id: 1
-      transactions:
-        - transaction-type: contract-publish
-          contract-name: trustlock-escrow
-          expected-sender: $DEPLOYER
-          path: contracts/trustlock-escrow.clar
-          clarity-version: 2
-          cost: 25000
-      epoch: "2.4"
-
-    # Batch 2: Deploy factory contract (depends on traits + escrow)
-    - id: 2
-      transactions:
-        - transaction-type: contract-publish
-          contract-name: trustlock-factory
-          expected-sender: $DEPLOYER
-          path: contracts/trustlock-factory.clar
-          clarity-version: 2
-          cost: 20000
+        - contract-publish:
+            contract-name: trustlock-traits
+            expected-sender: $DEPLOYER
+            cost: 10000
+            path: contracts/trustlock-traits.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: trustlock-escrow
+            expected-sender: $DEPLOYER
+            cost: 25000
+            path: contracts/trustlock-escrow.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: trustlock-factory
+            expected-sender: $DEPLOYER
+            cost: 20000
+            path: contracts/trustlock-factory.clar
+            anchor-block-only: true
+            clarity-version: 2
       epoch: "2.4"
