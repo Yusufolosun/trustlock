@@ -165,3 +165,29 @@ describe("State Error Codes", () => {
         simnet.callPublicFn("trustlock-escrow", "unpause", [], deployer);
     });
 });
+
+// ===== VALIDATION ERROR CODES (u300–u399) =====
+
+describe("Validation Error Codes", () => {
+    it("ERR-INVALID-AMOUNT (u300) rejects zero-amount escrow", () => {
+        const { result } = simnet.callPublicFn(
+            "trustlock-factory",
+            "create-escrow",
+            [Cl.principal(buyer), Cl.principal(seller), Cl.uint(0), Cl.uint(100)],
+            deployer,
+        );
+        expect(result).toBeErr(Cl.uint(300));
+    });
+
+    it("ERR-DEADLINE-PASSED (u301) rejects deposit after deadline expires", () => {
+        const { id } = createEscrow(buyer, seller, 1000000, 3);
+        simnet.mineEmptyBlocks(5);
+        const { result } = simnet.callPublicFn(
+            "trustlock-escrow",
+            "deposit",
+            [Cl.uint(id)],
+            buyer,
+        );
+        expect(result).toBeErr(Cl.uint(301));
+    });
+});
